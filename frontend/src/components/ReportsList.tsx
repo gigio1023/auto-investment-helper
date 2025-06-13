@@ -42,7 +42,7 @@ const ReportsList: React.FC = () => {
       await fetchReports();
     } catch (err) {
       setError('리포트 생성에 실패했습니다.');
-      // console.error('리포트 생성 오류:', err);
+      console.error('Report generation error:', err);
     } finally {
       setGenerating(false);
     }
