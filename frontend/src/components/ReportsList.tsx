@@ -11,7 +11,6 @@ const ReportsList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [generating, setGenerating] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [filter, setFilter] = useState<'all' | 'morning' | 'evening'>('all');
 
   const limit = 10;
@@ -136,7 +135,8 @@ const ReportsList: React.FC = () => {
             <div className='glass-layer-primary p-8 rounded-3xl backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border shadow-glass hover:shadow-glass-hover transition-all duration-300 hover:scale-105'>
               <div className='text-center'>
                 <div className='text-4xl font-bold text-gray-600 dark:text-gray-400 mb-2'>
-                  87%
+                  {/* TODO: Replace with actual trust score calculation when Report type includes trustScore */}
+                  85%
                 </div>
                 <div className='text-lg text-gray-600 dark:text-gray-300 font-medium'>
                   평균 신뢰도

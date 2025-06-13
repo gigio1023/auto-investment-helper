@@ -12,7 +12,7 @@ const LoadingSpinner: React.FC = () => {
           </div>
 
           {/* 내부 회전 링 */}
-          <div className='absolute w-16 h-16 border-4 border-transparent border-t-primary-600 border-r-financial-blue rounded-full animate-spin animate-reverse'></div>
+          <div className='absolute w-16 h-16 border-4 border-transparent border-t-primary-600 border-r-financial-blue rounded-full animate-spin' style={{ animationDirection: 'reverse' }}></div>
 
           {/* 중앙 아이콘 */}
           <div className='absolute inset-0 flex items-center justify-center'>
