@@ -23,7 +23,6 @@ const ReportsList: React.FC = () => {
       setTotal(response.total);
     } catch (err) {
       setError('리포트를 불러오는데 실패했습니다.');
-      // console.error('리포트 조회 오류:', err);
     } finally {
       setLoading(false);
     }
