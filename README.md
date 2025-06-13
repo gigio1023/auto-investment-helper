@@ -154,6 +154,7 @@ Key service files for customization:
 
 - [API Reference](./docs/api-reference.md)
 - [Development Guide](./docs/development-guide.md)
+- [Deployment Guide](./docs/deployment-guide.md)
 
 ## License
 
