@@ -40,26 +40,28 @@ graph TD
 
 ## 2. Project Structure
 
-The project is a monorepo containing the `backend` and `frontend` applications.
+The project follows an independent services architecture where each service can be developed, tested, and deployed separately.
 
 ```
 auto-investment-helper/
-├── backend/        # NestJS Backend
+├── backend/            # NestJS Backend (Independent)
 │   ├── src/
 │   │   ├── modules/    # Core feature modules (reports, news, llm)
 │   │   ├── entities/   # TypeORM entities
 │   │   ├── config/     # Configuration
 │   │   └── main.ts     # Application entry point
-│   ├── data/         # SQLite database file
-│   └── test/         # E2E tests
-├── frontend/       # React Frontend
+│   ├── data/           # SQLite database file
+│   ├── package.json    # Backend dependencies
+│   └── test/           # E2E tests
+├── frontend/           # React Frontend (Independent)
 │   ├── src/
 │   │   ├── components/ # UI Components
 │   │   ├── services/   # API services
 │   │   └── App.tsx     # Main application component
+│   ├── package.json    # Frontend dependencies
 │   └── public/
-├── docs/           # Project documentation
-└── package.json    # Root package configuration
+├── docs/               # Project documentation
+└── docker-compose.yml  # Container orchestration
 ```
 
 ## 3. Getting Started
@@ -69,8 +71,9 @@ auto-investment-helper/
 -   Node.js v18+
 -   npm v9+
 -   Git
+-   Docker (for production deployment)
 
-### Setup
+### Development Setup
 
 1.  **Clone the repository**:
     ```bash
@@ -78,97 +81,140 @@ auto-investment-helper/
     cd auto-investment-helper
     ```
 
-2.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
-    *This command installs dependencies for the root, backend, and frontend simultaneously.*
+2.  **Setup Backend**:
+     ```bash
+     cd backend
+     npm install
+     cp .env.example .env
+     # Edit .env and add your GEMINI_API_KEY
+     npm run start:dev
+     ```
 
-3.  **Configure environment variables**:
-    ```bash
-    # Create backend .env file
-    cp backend/.env.example backend/.env
-    # Add your GEMINI_API_KEY to backend/.env
-    ```
+3.  **Setup Frontend** (in another terminal):
+     ```bash
+     cd frontend
+     npm install
+     npm start
+     ```
 
-4.  **Run development servers**:
-    ```bash
-    npm run dev
-    ```
-    -   Backend runs on `http://localhost:3001`
-    -   Frontend runs on `http://localhost:3000`
+### Production Deployment
+
+```bash
+# Setup environment
+cp backend/.env.example backend/.env
+# Edit backend/.env and add your GEMINI_API_KEY
+
+# Deploy with Docker Compose
+docker-compose up --build
+```
 
 ## 4. Development Workflow
 
-### Testing
+### Backend Development
 
-Run all tests for both backend and frontend:
+Navigate to the backend directory and use standard NestJS commands:
 
-```bash
-npm test
-```
-
-To run tests for a specific application, navigate to its directory (`backend` or `frontend`) and run `npm test`.
-
-### Linting and Formatting
-
-이 프로젝트는 ESLint와 Prettier를 사용하여 코드 품질과 일관성을 유지합니다.
-
-#### 전체 프로젝트 린트 및 포맷팅
-
-```bash
-# 전체 프로젝트 린트 (자동 수정 포함)
-npm run lint
-
-# 전체 프로젝트 포맷팅
-npm run format
-```
-
-#### 개별 프로젝트 명령어
-
-**백엔드 (NestJS/TypeScript)**:
 ```bash
 cd backend
 
-# 린트 체크 및 자동 수정
-npm run lint
+# Install dependencies
+npm install
 
-# 코드 포맷팅
-npm run format
+# Development with hot-reload
+npm run start:dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm run start:prod
+
+# Run tests
+npm run test          # Unit tests
+npm run test:e2e      # E2E tests
+npm run test:all      # All tests
+
+# Linting and formatting
+npm run lint          # Lint with auto-fix
+npm run format        # Format code
 ```
 
-**프론트엔드 (React/TypeScript)**:
+### Frontend Development
+
+Navigate to the frontend directory and use standard React commands:
+
 ```bash
 cd frontend
 
-# 린트 체크 및 자동 수정
-npm run lint
+# Install dependencies
+npm install
 
-# 린트 체크만 (수정 없이)
-npm run lint:check
+# Development server
+npm start
 
-# 코드 포맷팅
-npm run format
+# Build for production
+npm run build
 
-# 포맷팅 체크만 (수정 없이)
-npm run format:check
+# Run tests
+npm test              # Interactive mode
+npm run test:coverage # With coverage report
+
+# Linting and formatting
+npm run lint          # Lint with auto-fix
+npm run lint:check    # Lint check only
+npm run format        # Format code
+npm run format:check  # Format check only
 ```
 
-#### 설정 파일
+### Docker Development
 
-- **백엔드**: `.eslintrc.js`, `.prettierrc`
-- **프론트엔드**: `.eslintrc.js`, `.prettierrc`
+For production-like environment testing:
 
-각 설정은 해당 기술 스택에 최적화되어 있으며, TypeScript와 각 프레임워크(NestJS/React)의 모범 사례를 따릅니다.
+```bash
+# Build and start all services
+docker-compose up --build
 
-#### IDE 설정 권장사항
+# Run in background
+docker-compose up -d
 
-VSCode 사용자는 다음 확장을 설치하는 것을 권장합니다:
-- ESLint
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+## 5. Service Independence
+
+Each service (backend/frontend) is completely independent:
+
+- **Separate Dependencies**: Each has its own `package.json`
+- **Independent Deployment**: Can be deployed separately
+- **Technology Flexibility**: Backend could be replaced with Python/Go, frontend with Vue/Angular
+- **Isolated Testing**: Each service has its own test suite
+
+### Adding New Services
+
+To add a new service (e.g., `mobile-app`, `admin-panel`):
+
+1. Create a new directory with its own `package.json`
+2. Add the service to `docker-compose.yml` if needed
+3. Follow the same independent development pattern
+
+## 6. Configuration Files
+
+- **Backend**: `.eslintrc.js`, `.prettierrc` (NestJS optimized)
+- **Frontend**: `.eslintrc.js`, `.prettierrc` (React optimized)
+- **Docker**: `Dockerfile` in each service directory
+
+## 7. IDE Setup Recommendations
+
+For VSCode users:
+- ESLint extension
 - Prettier - Code formatter
 - TypeScript Importer
 
-저장 시 자동 포맷팅을 위해 VSCode 설정에 다음을 추가하세요:
+Workspace settings (`.vscode/settings.json`):
 ```json
 {
   "editor.formatOnSave": true,
@@ -178,8 +224,9 @@ VSCode 사용자는 다음 확장을 설치하는 것을 권장합니다:
 }
 ```
 
-### Common Issues
+## 8. Common Issues
 
--   **Port Conflict**: If port `3000` or `3001` is in use, find and stop the process using `lsof -i :<port>` and `kill -9 <PID>`.
--   **API Key Error**: Ensure your `GEMINI_API_KEY` in `backend/.env` is correct and has the necessary permissions.
--   **Database Schema Issues**: For schema mismatches in development, delete `backend/data/investment.db` and restart the backend server. TypeORM will regenerate the schema. 
+- **Port Conflicts**: Use `lsof -i :<port>` and `kill -9 <PID>` to free ports
+- **API Key Errors**: Ensure `GEMINI_API_KEY` in `backend/.env` is correct
+- **Database Issues**: Delete `backend/data/investment.db` to reset schema
+- **Docker Issues**: Run `docker-compose down` and `docker system prune` to clean up 
