@@ -1,51 +1,103 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 
 const Header: React.FC = () => {
-  const [isDark, setIsDark] = useState<boolean>(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    // 로컬 스토리지에서 테마 설정 읽기
-    const savedTheme = localStorage.getItem('theme');
+    // 시스템 테마 확인
     const prefersDark = window.matchMedia(
       '(prefers-color-scheme: dark)',
     ).matches;
+    const savedTheme = localStorage.getItem('theme');
 
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      setIsDark(true);
-      document.documentElement.classList.add('dark');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
     } else {
-      setIsDark(false);
-      document.documentElement.classList.remove('dark');
+      setIsDarkMode(prefersDark);
     }
   }, []);
 
-  const toggleTheme = () => {
-    const newIsDark = !isDark;
-    setIsDark(newIsDark);
-
-    if (newIsDark) {
+  useEffect(() => {
+    // HTML 클래스 업데이트
+    if (isDarkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
   };
 
   return (
     <header className='relative'>
-      {/* 극명한 글래스 배경 효과 */}
-      <div className='absolute inset-0 backdrop-blur-5xl bg-glass-gradient border-b-2 border-glass-white-border dark:border-glass-black-border shadow-glass dark:shadow-glass-dark' />
-      {/* 메인 헤더 */}
-      <div className='relative container mx-auto px-6 py-6'>
-        <div className='flex items-center justify-between'>
-          {/* 로고/제목 */}
-          <div className='flex items-center space-x-4'>
-            <div className='flex items-center space-x-3'>
-              <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-glow-primary border-2 border-glass-white-border dark:border-glass-black-border backdrop-blur-sm'>
+      {/* 글래스 네비게이션 바 */}
+      <nav className='sticky top-0 z-50 glass-card backdrop-blur-extreme border-b-2 border-glass-white-border dark:border-glass-black-border shadow-glass'>
+        <div className='max-w-7xl mx-auto px-6 sm:px-8'>
+          <div className='flex items-center justify-between h-20'>
+            {/* 로고 섹션 */}
+            <Link
+              to='/'
+              className='flex items-center space-x-4 group transition-transform duration-120 ease-fast-out hover:scale-105 will-change-transform'
+            >
+              {/* 로고 아이콘 */}
+              <div className='relative'>
+                <div className='w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-glass group-hover:shadow-glow-primary transition-all duration-120 ease-fast-out'>
+                  <span className='text-white text-2xl font-bold drop-shadow-lg'>
+                    📊
+                  </span>
+                </div>
+                {/* 글로우 효과 */}
+                <div className='absolute inset-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 opacity-0 blur-lg group-hover:opacity-20 transition-opacity duration-120'></div>
+              </div>
+
+              {/* 로고 텍스트 */}
+              <div className='hidden sm:block'>
+                <h1 className='text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent group-hover:from-primary-500 group-hover:to-primary-400 transition-all duration-120'>
+                  투자분석AI
+                </h1>
+                <p className='text-sm text-gray-600 dark:text-gray-300 font-medium'>
+                  AI 기반 투자 리포트 분석
+                </p>
+              </div>
+            </Link>
+
+            {/* 네비게이션 메뉴 */}
+            <div className='flex items-center space-x-6'>
+              {/* 네비게이션 링크들 */}
+              <div className='hidden md:flex items-center space-x-6'>
+                <Link
+                  to='/'
+                  className='glass-button px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-semibold rounded-2xl transition-all duration-120 ease-fast-out backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border hover:border-primary-400 dark:hover:bg-glass-black-border hover:scale-[1.02] transform will-change-transform'
+                >
+                  홈
+                </Link>
+                <Link
+                  to='/reports'
+                  className='glass-button px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-semibold rounded-2xl transition-all duration-120 ease-fast-out backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border hover:border-primary-400 dark:hover:bg-glass-black-border hover:scale-[1.02] transform will-change-transform'
+                >
+                  리포트
+                </Link>
+                <Link
+                  to='/analytics'
+                  className='glass-button px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-semibold rounded-2xl transition-all duration-120 ease-fast-out backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border hover:border-primary-400 dark:hover:bg-glass-black-border hover:scale-[1.02] transform will-change-transform'
+                >
+                  분석
+                </Link>
+              </div>
+
+              {/* 테마 토글 */}
+              <ThemeToggle isDark={isDarkMode} onToggle={toggleTheme} />
+
+              {/* 모바일 메뉴 버튼 */}
+              <button className='md:hidden glass-button p-3 rounded-2xl text-gray-700 dark:text-gray-300 backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border transition-all duration-120 ease-fast-out hover:scale-105 will-change-transform'>
                 <svg
-                  className='w-7 h-7 text-white drop-shadow-lg'
+                  className='w-6 h-6'
                   fill='none'
                   stroke='currentColor'
                   viewBox='0 0 24 24'
@@ -53,63 +105,15 @@ const Header: React.FC = () => {
                   <path
                     strokeLinecap='round'
                     strokeLinejoin='round'
-                    strokeWidth={2.5}
-                    d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
+                    strokeWidth={2}
+                    d='M4 6h16M4 12h16M4 18h16'
                   />
                 </svg>
-              </div>
-              <div>
-                <h1 className='text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent drop-shadow-sm'>
-                  투자 리포트 분석기
-                </h1>
-                <p className='text-sm text-gray-600 dark:text-gray-400 font-medium'>
-                  AI 기반 투자 리포트 분석 플랫폼
-                </p>
-              </div>
+              </button>
             </div>
           </div>
-
-          {/* 우측 메뉴 */}
-          <div className='flex items-center space-x-4'>
-            {/* 극명한 글래스 알림 아이콘 */}
-            <button className='p-4 rounded-2xl bg-glass-white-strong dark:bg-glass-black-strong backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border hover:bg-glass-white-border dark:hover:bg-glass-black-border transition-all duration-300 hover:scale-110 shadow-glass hover:shadow-glass-hover hover:shadow-glow-primary'>
-              <svg
-                className='w-6 h-6 text-gray-700 dark:text-gray-300'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'
-                />
-              </svg>
-            </button>
-
-            {/* 극명한 글래스 사용자 메뉴 */}
-            <button className='p-4 rounded-2xl bg-glass-white-strong dark:bg-glass-black-strong backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border hover:bg-glass-white-border dark:hover:bg-glass-black-border transition-all duration-300 hover:scale-110 shadow-glass hover:shadow-glass-hover hover:shadow-glow-primary'>
-              <svg
-                className='w-6 h-6 text-gray-700 dark:text-gray-300'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
-                />
-              </svg>
-            </button>
-
-            {/* 테마 토글 */}
-            <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
-          </div>
         </div>
-      </div>
+      </nav>
     </header>
   );
 };
