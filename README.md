@@ -108,32 +108,108 @@ flowchart TD
 
 ## Quick Start
 
+### For Development
+
 ```bash
-# Clone and setup
+# Clone the repository
+git clone <repository-url>
+cd auto-investment-helper
+
+# Setup backend
+cd backend
+npm install
+cp .env.example .env
+# Add your GEMINI_API_KEY to .env
+npm run start:dev
+
+# In another terminal, setup frontend
+cd frontend
+npm install
+npm start
+```
+
+### For Production (Docker)
+
+```bash
+# Clone and setup environment
 git clone <repository-url>
 cd auto-investment-helper
 cp backend/.env.example backend/.env
-# Add GEMINI_API_KEY to backend/.env
+# Add your GEMINI_API_KEY to backend/.env
 
-# Install and run
-npm install
-npm run dev
+# Build and run with Docker Compose
+docker-compose up --build
 ```
 
 **Endpoints:**
 - Backend: `http://localhost:3001`
 - Frontend: `http://localhost:3000`
 
-## Key Commands
+## Development
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev` | Start both servers |
-| `npm run build` | Production build |
-| `npm test` | Run all tests |
-| `npm run lint` | Code formatting |
+Each service runs independently. Navigate to the service directory and use standard npm commands.
 
-## API Reference
+### Backend Development
+```bash
+cd backend
+
+# Install dependencies
+npm install
+
+# Development with hot-reload
+npm run start:dev
+
+# Build for production
+npm run build
+
+# Run tests
+npm run test:all
+
+# Lint and format
+npm run lint
+npm run format
+```
+
+### Frontend Development
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Development server
+npm start
+
+# Build for production
+npm run build
+
+# Run tests
+npm run test:coverage
+
+# Lint and format
+npm run lint
+npm run format
+```
+
+## Production Deployment
+
+Use Docker Compose for production deployment:
+
+```bash
+# Build and start all services
+docker-compose up --build
+
+# Run in background
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f
+```
+
+  ## API Reference
 
 - `GET /reports` - List reports (paginated)
 - `GET /reports/:id` - Get specific report  
