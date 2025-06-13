@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { reportsApi } from '../services/api';
 import { Report } from '../types';
@@ -14,11 +14,7 @@ const ReportsList: React.FC = () => {
 
   const limit = 10;
 
-  useEffect(() => {
-    fetchReports();
-  }, [page]);
-
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -27,11 +23,15 @@ const ReportsList: React.FC = () => {
       setTotal(response.total);
     } catch (err) {
       setError('리포트를 불러오는데 실패했습니다.');
-      console.error('리포트 조회 오류:', err);
+      // console.error('리포트 조회 오류:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit]);
+
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
 
   const generateReport = async (type: 'morning' | 'evening') => {
     try {
@@ -43,7 +43,7 @@ const ReportsList: React.FC = () => {
       await fetchReports();
     } catch (err) {
       setError('리포트 생성에 실패했습니다.');
-      console.error('리포트 생성 오류:', err);
+      // console.error('리포트 생성 오류:', err);
     } finally {
       setGenerating(false);
     }
