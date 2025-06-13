@@ -196,13 +196,13 @@ const ReportsList: React.FC = () => {
       {/* 극명한 글래스 필터 버튼들 */}
       <div className='flex flex-wrap gap-4 mb-10'>
         {[
-          { key: 'all', label: '전체' },
-          { key: 'morning', label: '🌅 모닝브리핑' },
-          { key: 'evening', label: '🌆 이브닝브리핑' },
+          { key: 'all' as const, label: '전체' },
+          { key: 'morning' as const, label: '🌅 모닝브리핑' },
+          { key: 'evening' as const, label: '🌆 이브닝브리핑' },
         ].map(item => (
           <button
             key={item.key}
-            onClick={() => setFilter(item.key as any)}
+            onClick={() => setFilter(item.key)}
             className={`glass-button px-8 py-4 rounded-2xl text-lg font-semibold transition-all duration-300 backdrop-blur-extreme border-2 shadow-glass hover:shadow-glass-hover hover:scale-105 ${
               filter === item.key
                 ? 'bg-glass-white-border dark:bg-glass-black-border border-primary-500 text-primary-600 dark:text-primary-400 shadow-glow-primary'
