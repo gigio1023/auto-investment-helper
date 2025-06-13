@@ -1,0 +1,37 @@
+import { Controller, Get, Post, Query, Param } from '@nestjs/common';
+import { NewsService } from './news.service';
+
+@Controller('news')
+export class NewsController {
+  constructor(private readonly newsService: NewsService) {}
+
+  @Get('stats')
+  async getNewsStats(): Promise<any> {
+    return this.newsService.getNewsStats();
+  }
+
+  @Get('recent')
+  async getRecentNews(@Query('hours') hours: string = '24'): Promise<any> {
+    const hoursNum = parseInt(hours, 10) || 24;
+    return this.newsService.getRecentNews(hoursNum);
+  }
+
+  @Get('category/:category')
+  async getNewsByCategory(@Param('category') category: string): Promise<any> {
+    return this.newsService.getNewsByCategory(category);
+  }
+
+  @Get('unprocessed')
+  async getUnprocessedNews(): Promise<any> {
+    return this.newsService.getUnprocessedNews();
+  }
+
+  @Post('collect')
+  async collectNews(): Promise<{ message: string; timestamp: Date }> {
+    await this.newsService.collectNews();
+    return {
+      message: '뉴스 수집이 완료되었습니다.',
+      timestamp: new Date(),
+    };
+  }
+}
