@@ -25,7 +25,7 @@ const ReportDetail: React.FC = () => {
       setReport(data);
     } catch (err) {
       setError('리포트를 불러오는데 실패했습니다.');
-      // console.error('리포트 조회 오류:', err);
+      console.error('Error fetching report:', err instanceof Error ? err.message : err, err);
     } finally {
       setLoading(false);
     }
