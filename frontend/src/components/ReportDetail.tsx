@@ -96,7 +96,7 @@ const ReportDetail: React.FC = () => {
           오류가 발생했습니다
         </h3>
         <p className='text-gray-600 mb-6'>
-          {error ?? '리포트를 찾을 수 없습니다.'}
+          {error || '리포트를 찾을 수 없습니다.'}
         </p>
         <button
           onClick={() => navigate('/')}
