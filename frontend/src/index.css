@@ -1,17 +1,344 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* 극명한 글래스모피즘 변수 */
+:root {
+  /* 라이트 모드 글래스 - 극명한 효과 */
+  --glass-bg: rgba(255, 255, 255, 0.15);
+  --glass-bg-secondary: rgba(255, 255, 255, 0.08);
+  --glass-bg-strong: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-border-strong: rgba(255, 255, 255, 0.8);
+  --glass-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25);
+  --glass-shadow-hover: 0 35px 60px -12px rgba(0, 0, 0, 0.35);
+  --glass-reflection: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%, rgba(255, 255, 255, 0.1) 100%);
+  
+  /* 텍스트 대비 - 부드럽게 유지 */
+  --text-primary: rgba(30, 30, 30, 0.9);
+  --text-secondary: rgba(60, 60, 60, 0.75);
+  --text-tertiary: rgba(90, 90, 90, 0.6);
+  
+  /* 액센트 컬러 - 부드러운 톤 유지 */
+  --accent-primary: #6B94FF;
+  --accent-secondary: #4ADE80;
+  --accent-warning: #FFA726;
+  --accent-danger: #EF5350;
+}
+
+.dark {
+  /* 다크 모드 글래스 - 극명한 효과 */
+  --glass-bg: rgba(15, 15, 25, 0.25);
+  --glass-bg-secondary: rgba(10, 10, 20, 0.15);
+  --glass-bg-strong: rgba(20, 20, 35, 0.35);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-border-strong: rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.8);
+  --glass-shadow-hover: 0 35px 60px -12px rgba(0, 0, 0, 0.9);
+  --glass-reflection: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%, rgba(255, 255, 255, 0.05) 100%);
+  
+  /* 다크 모드 텍스트 대비 개선 */
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.8);
+  --text-tertiary: rgba(255, 255, 255, 0.65);
+  
+  /* 다크 모드 액센트 */
+  --accent-primary: #64B5F6;
+  --accent-secondary: #81C784;
+  --accent-warning: #FFB74D;
+  --accent-danger: #E57373;
+}
+
+/* 기본 스타일 */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* 부드러운 라이트 모드 배경 유지 */
+  background: linear-gradient(135deg, #f0f4ff 0%, #e6f3ff 50%, #f5f7fa 100%);
+  min-height: 100vh;
+}
+
+.dark body {
+  background: linear-gradient(135deg, #0c0e27 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family: 'JetBrains Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* 극명한 글래스모피즘 효과 */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 2px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--glass-reflection);
+}
+
+.glass::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--glass-reflection);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.glass-card {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(50px) saturate(220%);
+  -webkit-backdrop-filter: blur(50px) saturate(220%);
+  border: 2px solid var(--glass-border-strong);
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 극명한 유리 텍스처와 반사 */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    var(--glass-reflection),
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 60%),
+    radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glass-card:hover {
+  transform: translateY(-12px) scale(1.03);
+  box-shadow: 
+    var(--glass-shadow-hover),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.2),
+    0 0 40px rgba(107, 148, 255, 0.2);
+  border-color: var(--glass-border-strong);
+}
+
+.dark .glass-card:hover {
+  box-shadow: 
+    var(--glass-shadow-hover),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+    0 0 40px rgba(100, 181, 246, 0.3);
+}
+
+/* 강화된 다층 글래스 효과 */
+.glass-layer-primary {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.4) 0%, 
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.3) 100%);
+  backdrop-filter: blur(25px) saturate(180%);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 
+    0 20px 40px rgba(31, 38, 135, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.glass-layer-secondary {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(60px) saturate(200%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+/* 세련된 그라데이션 - 부드러운 색상 유지 */
+.financial-gradient {
+  background: linear-gradient(135deg, #f0f4ff 0%, #e6f3ff 50%, #f5f7fa 100%);
+}
+
+.dark .financial-gradient {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+}
+
+/* 텍스트 가독성 개선 */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-tertiary {
+  color: var(--text-tertiary);
+}
+
+/* 부드러운 애니메이션 */
+.smooth-transition {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 극명한 글래스 버튼 */
+.glass-button {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(45px) saturate(200%);
+  border: 2px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 18px 28px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 15px 35px rgba(31, 38, 135, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.glass-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.4), 
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 255, 255, 0.4),
+    transparent);
+  transition: left 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--glass-reflection);
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.glass-button:hover::before {
+  left: 100%;
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 25px 50px rgba(31, 38, 135, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.2),
+    0 0 30px rgba(107, 148, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+/* 스크롤바 개선 */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(100, 100, 100, 0.4), rgba(100, 100, 100, 0.6));
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(100, 100, 100, 0.6), rgba(100, 100, 100, 0.8));
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgba(30, 30, 30, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.4));
+}
+
+/* 접근성 개선 */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent;
+}
+
+/* 극명한 그림자 효과 */
+.shadow-glow {
+  box-shadow: 0 0 40px var(--accent-primary);
+}
+
+.shadow-glow-green {
+  box-shadow: 0 0 40px var(--accent-secondary);
+}
+
+.shadow-glow-orange {
+  box-shadow: 0 0 40px var(--accent-warning);
+}
+
+/* 접근성을 위한 미디어 쿼리 */
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .glass-card, .glass-button {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: none;
+  }
+  
+  .dark .glass, .dark .glass-card, .dark .glass-button {
+    background: rgba(30, 30, 30, 0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-button, .glass-card, .smooth-transition {
+    transition: none;
+  }
+  
+  .glass-button::before {
+    display: none;
+  }
 }
