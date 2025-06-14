@@ -95,7 +95,10 @@ const Header: React.FC = () => {
               <ThemeToggle isDark={isDarkMode} onToggle={toggleTheme} />
 
               {/* 모바일 메뉴 버튼 */}
-              <button className='md:hidden glass-button p-3 rounded-2xl text-gray-700 dark:text-gray-300 backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border transition-all duration-120 ease-fast-out hover:scale-105 will-change-transform'>
+              <button 
+                className='md:hidden glass-button p-3 rounded-2xl text-gray-700 dark:text-gray-300 backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border transition-all duration-120 ease-fast-out hover:scale-105 will-change-transform'
+                aria-label='메뉴 열기'
+              >
                 <svg
                   className='w-6 h-6'
                   fill='none'
