@@ -241,3 +241,4 @@ ISC
 - Gemini API key required
 - Check database paths and security settings for production
 - Monitor API usage costs
+- This project leverages AI development tools (Claude Code, Cursor) for enhanced development workflow and code quality
