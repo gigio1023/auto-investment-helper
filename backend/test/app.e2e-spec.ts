@@ -110,9 +110,9 @@ describe('AppController (e2e)', () => {
         });
     });
 
-    it('/reports/generate with invalid type (POST)', () => {
+    it('/reports/test/generate with invalid type (POST)', () => {
       return request(app.getHttpServer())
-        .post('/reports/generate/invalid')
+        .post('/reports/test/generate/invalid')
         .expect(400);
     });
   });
