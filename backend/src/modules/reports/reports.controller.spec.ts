@@ -16,7 +16,6 @@ describe('ReportsController', () => {
   };
 
   const mockSchedulerService = {
-    generateManualReport: jest.fn(),
     getSchedulerStatus: jest.fn(),
   };
 
@@ -133,59 +132,29 @@ describe('ReportsController', () => {
     });
   });
 
-  describe('generateReport', () => {
-    it('should generate morning report', async () => {
-      const mockResult = {
-        success: true,
-        report: {
-          id: 1,
-          title: '오전 투자 리포트',
-          content: '테스트 내용',
-          summary: '테스트 요약',
-          reportType: 'morning' as const,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+  describe('getSchedulerStatus', () => {
+    it('should return scheduler status', async () => {
+      const mockStatus = {
+        morningReport: {
+          schedule: '매일 오전 8시 (KST)',
+          cron: '0 8 * * *',
+          enabled: true,
         },
-        duration: 15,
-        generatedAt: new Date(),
-        type: 'manual',
+        eveningReport: {
+          schedule: '매일 오후 6시 (KST)',
+          cron: '0 18 * * *',
+          enabled: true,
+        },
+        timezone: 'Asia/Seoul',
+        currentTime: new Date(),
       };
 
-      mockSchedulerService.generateManualReport.mockResolvedValue(mockResult);
+      mockSchedulerService.getSchedulerStatus.mockReturnValue(mockStatus);
 
-      const result = await controller.generateReport('morning');
+      const result = await controller.getSchedulerStatus();
 
-      expect(result).toEqual(mockResult);
-      expect(schedulerService.generateManualReport).toHaveBeenCalledWith(
-        'morning',
-      );
-    });
-
-    it('should generate evening report', async () => {
-      const mockResult = {
-        success: true,
-        report: {
-          id: 2,
-          title: '오후 투자 리포트',
-          content: '테스트 내용',
-          summary: '테스트 요약',
-          reportType: 'evening' as const,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        duration: 20,
-        generatedAt: new Date(),
-        type: 'manual',
-      };
-
-      mockSchedulerService.generateManualReport.mockResolvedValue(mockResult);
-
-      const result = await controller.generateReport('evening');
-
-      expect(result).toEqual(mockResult);
-      expect(schedulerService.generateManualReport).toHaveBeenCalledWith(
-        'evening',
-      );
+      expect(result).toEqual(mockStatus);
+      expect(schedulerService.getSchedulerStatus).toHaveBeenCalled();
     });
   });
 });

@@ -7,8 +7,6 @@ import LoadingSpinner from './LoadingSpinner';
 // 재사용 가능한 스타일 상수들 - 컴포넌트 외부로 이동하여 성능 최적화
 const STATS_CARD_CLASS =
   'glass-layer-primary p-8 rounded-3xl backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border shadow-glass hover:shadow-hover-lift transition-all duration-180 ease-fast-out hover:scale-[1.02] transform will-change-transform';
-const ACTION_BUTTON_CLASS =
-  'glass-button px-8 py-4 rounded-2xl font-bold transition-all duration-120 ease-fast-out shadow-glass transform hover:scale-[1.02] disabled:transform-none backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border will-change-transform';
 const FILTER_BUTTON_CLASS =
   'glass-button px-8 py-4 rounded-2xl text-lg font-semibold transition-all duration-120 ease-fast-out backdrop-blur-extreme border-2 shadow-glass hover:shadow-hover-lift hover:scale-[1.02] transform will-change-transform';
 
@@ -21,7 +19,6 @@ const ReportsList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [filter, setFilter] = useState<FilterType>('all');
-  const [generating, setGenerating] = useState(false);
 
   const limit = 10;
 
@@ -42,22 +39,6 @@ const ReportsList: React.FC = () => {
   useEffect(() => {
     fetchReports();
   }, [fetchReports]);
-
-  const generateReport = async (type: 'morning' | 'evening') => {
-    try {
-      setGenerating(true);
-      await reportsApi.generateReport(type);
-
-      // 새 리포트 생성 후 목록 새로고침
-      setPage(1);
-      await fetchReports();
-    } catch (err) {
-      setError('리포트 생성에 실패했습니다.');
-      console.error('Report generation error:', err);
-    } finally {
-      setGenerating(false);
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
@@ -101,7 +82,7 @@ const ReportsList: React.FC = () => {
             투자 리포트 분석
           </h2>
           <p className='text-xl text-gray-600 dark:text-gray-300 mb-8 font-medium leading-relaxed'>
-            AI가 분석한 투자 리포트를 확인하고 인사이트를 얻어보세요
+            매일 오전 8시와 오후 6시에 자동 생성되는 AI 투자 리포트를 확인하세요
           </p>
 
           {/* 극명한 글래스 통계 카드들 */}
@@ -155,33 +136,19 @@ const ReportsList: React.FC = () => {
             </div>
           </div>
 
-          {/* 극명한 글래스 액션 버튼들 */}
-          <div className='flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6 mt-8'>
-            <button
-              onClick={() => generateReport('morning')}
-              disabled={generating}
-              className={`${ACTION_BUTTON_CLASS} bg-gradient-to-r from-financial-gold/30 to-financial-gold/20 hover:from-financial-gold/40 hover:to-financial-gold/30 disabled:from-gray-400/20 disabled:to-gray-500/20 text-gray-900 dark:text-white hover:shadow-glow-orange`}
-            >
-              <div className='flex items-center space-x-3'>
-                <span className='text-2xl'>🌅</span>
-                <span className='text-lg'>
-                  {generating ? '생성중...' : '모닝브리핑'}
-                </span>
+          {/* 스케줄 정보 */}
+          <div className='glass-card p-6 bg-gradient-to-r from-primary-500/10 to-primary-600/10 border-primary-500/30 mt-8'>
+            <div className='flex items-center space-x-4'>
+              <span className='text-3xl'>⏰</span>
+              <div>
+                <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-1'>
+                  자동 생성 스케줄
+                </h3>
+                <p className='text-gray-700 dark:text-gray-300 font-medium'>
+                  🌅 모닝브리핑: 매일 오전 8시 | 🌆 이브닝브리핑: 매일 오후 6시
+                </p>
               </div>
-            </button>
-
-            <button
-              onClick={() => generateReport('evening')}
-              disabled={generating}
-              className={`${ACTION_BUTTON_CLASS} bg-gradient-to-r from-primary-500/30 to-primary-600/20 hover:from-primary-500/40 hover:to-primary-600/30 disabled:from-gray-400/20 disabled:to-gray-500/20 text-gray-900 dark:text-white hover:shadow-glow-primary`}
-            >
-              <div className='flex items-center space-x-3'>
-                <span className='text-2xl'>🌆</span>
-                <span className='text-lg'>
-                  {generating ? '생성중...' : '이브닝브리핑'}
-                </span>
-              </div>
-            </button>
+            </div>
           </div>
         </div>
       </div>

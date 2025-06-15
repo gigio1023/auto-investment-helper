@@ -45,7 +45,7 @@ graph TD
 
 ## Report Generation Flow
 
-Automated investment reports are generated twice daily (8 AM, 6 PM KST) or on-demand.
+Investment reports are automatically generated via scheduled batch jobs twice daily (8 AM, 6 PM KST). No manual report generation is supported to control AI costs and ensure consistent timing.
 
 ```mermaid
 sequenceDiagram
@@ -59,13 +59,8 @@ sequenceDiagram
     participant RSS as RSS Feeds
     participant AI as AI Provider
 
-    alt Scheduled Report
-        SCH->>API: POST /reports/generate
-    else Manual Report
-        USR->>API: POST /reports/generate
-    end
-
-    API->>REP: triggerReportGeneration()
+    Note over SCH: Automated Batch Processing Only
+    SCH->>REP: triggerScheduledGeneration()
     REP->>NEW: collectNews()
     NEW->>RSS: Fetch news articles
     RSS-->>NEW: Return articles
@@ -80,7 +75,12 @@ sequenceDiagram
     
     LLM-->>REP: Return final report content
     REP->>DB: Save generated report
-```
+    
+    Note over USR, API: Read-Only Access
+    USR->>API: GET /reports
+    API->>DB: Fetch existing reports
+    DB-->>API: Return reports
+    API-->>USR: Display reports
 
 ## News Collection Process
 
@@ -213,9 +213,8 @@ docker-compose logs -f
 
 - `GET /reports` - List reports (paginated)
 - `GET /reports/:id` - Get specific report  
-- `POST /reports/generate/:type` - Generate report (`morning`/`evening`)
 - `GET /news/stats` - News collection statistics
-- `POST /news/collect` - Manual news collection
+- `GET /scheduler/status` - Batch job status (monitoring)
 - `GET /health` - Service health check
 
 ## Configuration

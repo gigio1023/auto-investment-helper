@@ -23,11 +23,6 @@ export const reportsApi = {
     const response = await api.get(`/reports/date/${date}`);
     return response.data;
   },
-
-  generateReport: async (type: 'morning' | 'evening'): Promise<Report> => {
-    const response = await api.post(`/reports/generate/${type}`);
-    return response.data;
-  },
 };
 
 export default api;
