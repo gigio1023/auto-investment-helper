@@ -39,7 +39,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ isDark, onToggle }) => {
           ${!isDark ? 'scale-100 opacity-100' : 'scale-75 opacity-50'}
         `}
         >
-          ☀️
+          <span aria-hidden='true'>☀️</span>
         </div>
         {/* 달 아이콘 */}
         <div
@@ -48,7 +48,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ isDark, onToggle }) => {
           ${isDark ? 'scale-100 opacity-100' : 'scale-75 opacity-50'}
         `}
         >
-          🌙
+          <span aria-hidden='true'>🌙</span>
         </div>
       </div>
 
