@@ -95,7 +95,7 @@ docker-compose logs -f       # View logs
 
 ### Batch Processing Only
 - Reports are generated automatically by scheduled cron jobs
-- No manual generation endpoints to prevent unnecessary AI costs
+- Manual generation endpoints available for testing/development
 - System maintains cost control through automated scheduling
 
 ### News Sources Integration
@@ -114,17 +114,108 @@ docker-compose logs -f       # View logs
 - `GET /scheduler/status` - Batch job status
 - `GET /health` - Service health check
 
+### Testing & Development Endpoints
+- `POST /reports/test/generate/:type` - Manual report generation (morning/evening)
+- `POST /reports/test/news/collect` - Manual news collection
+- `POST /reports/test/flow/full` - Complete pipeline test
+- `GET /reports/test/flow/status` - System status overview
+- `GET /test/health` - Comprehensive system health check
+- `POST /test/suites/:name/run` - Execute specific test suite
+- `POST /test/data/mock-news` - Create mock news for testing
+- `DELETE /test/data/cleanup` - Clean up test data
+
 ## Testing Strategy
+
+This project implements a comprehensive testing strategy specifically designed for batch processing systems. See [TESTING.md](TESTING.md) for complete documentation.
+
+### Testing Challenges for Batch Systems
+- **Scheduled Operations**: Cannot wait for cron jobs during testing
+- **External Dependencies**: RSS feeds, LLM APIs, and network services
+- **Data Flow Validation**: End-to-end pipeline testing
+- **Performance Testing**: Resource usage and timing validation
+
+### Manual Trigger System
+Since the system is primarily batch-driven, manual trigger endpoints enable immediate testing:
+
+```bash
+# Test complete data flow
+curl -X POST http://localhost:3000/reports/test/flow/full
+
+# Generate specific report type
+curl -X POST http://localhost:3000/reports/test/generate/morning
+
+# Test news collection only
+curl -X POST http://localhost:3000/reports/test/news/collect
+```
+
+### Test Suites Available
+1. **news-collection**: RSS feed parsing, data storage, error handling
+2. **report-generation**: LLM integration, content validation, performance
+3. **integration**: End-to-end pipeline testing with mock data
+
+### Mock Data Strategy
+- **Predictable Testing**: Uses controlled mock news data
+- **Isolated Tests**: No dependency on external RSS feeds
+- **Performance Validation**: Consistent data volume for timing tests
+- **Cleanup**: Automatic test data removal
+
+### Testing Service Architecture
+```typescript
+// Example usage
+const testingService = new TestingService();
+
+// Create controlled test environment
+await testingService.createMockNews(5);
+
+// Run comprehensive test suite
+const results = await testingService.runTestSuite('integration');
+
+// Validate system health
+const health = await testingService.getSystemHealth();
+
+// Clean up after testing
+await testingService.cleanupTestData();
+```
 
 ### Backend Testing
 - **Unit Tests**: `*.spec.ts` files alongside source code
 - **E2E Tests**: `test/*.e2e-spec.ts` for full API workflows
+- **Integration Tests**: `test/integration/*.e2e-spec.ts` for data flow validation
 - **Coverage**: Comprehensive coverage reports available
 
 ### Frontend Testing
 - **Component Tests**: React Testing Library in `__tests__` directories
 - **API Tests**: Service layer testing with mocked responses
 - **Integration**: User interaction testing with Jest
+
+### Performance Testing
+- **Time Limits**: News collection < 30s, Report generation < 60s
+- **Resource Monitoring**: Memory usage, CPU utilization tracking
+- **Concurrent Processing**: Multiple report generation validation
+- **LLM Response Time**: Timeout and fallback mechanism testing
+
+### Test Data Management
+```bash
+# Create mock news for testing
+POST /test/data/mock-news
+{
+  "count": 5
+}
+
+# Clean up all test data
+DELETE /test/data/cleanup
+```
+
+### Continuous Integration
+```bash
+# Run all test suites
+npm run test:all
+
+# Run specific test types
+npm run test:unit
+npm run test:e2e
+npm run test:integration
+```
 
 ## Development Patterns
 
