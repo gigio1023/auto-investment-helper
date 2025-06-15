@@ -339,6 +339,7 @@ ${newsAnalysis}
     });
 
     const latest = await this.reportRepository.findOne({
+      where: {},
       order: { createdAt: 'DESC' },
     });
 

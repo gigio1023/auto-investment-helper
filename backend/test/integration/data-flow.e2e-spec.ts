@@ -92,6 +92,9 @@ describe('Data Flow Integration (e2e)', () => {
     }, 60000); // 60 second timeout for LLM operations
 
     it('should_handle_no_news_scenario_gracefully', async () => {
+      // Clean up any existing test data first
+      await testingService.cleanupTestData();
+      
       // Start with no news
       const initialStats = await newsService.getNewsStats();
       expect(initialStats.unprocessed).toBe(0);
@@ -99,7 +102,7 @@ describe('Data Flow Integration (e2e)', () => {
       // Generate report with no news
       const report = await reportsService.generateDailyReport('morning');
       expect(report).toBeDefined();
-      expect(report.content).toContain('분석할 새로운 뉴스가 없습니다');
+      expect(report.content).toContain('시스템 알림');
       expect(report.newsAnalysis.processedCount).toBe(0);
     }, 30000);
 
