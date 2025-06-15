@@ -152,7 +152,6 @@ export class SchedulerService {
     }
   }
 
-
   // 리포트 생성 성공 알림
   private notifyReportGenerated(
     type: string,

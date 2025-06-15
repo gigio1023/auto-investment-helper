@@ -25,5 +25,4 @@ export class NewsController {
   async getUnprocessedNews(): Promise<any> {
     return this.newsService.getUnprocessedNews();
   }
-
 }

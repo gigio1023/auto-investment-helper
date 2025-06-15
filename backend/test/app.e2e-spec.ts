@@ -93,7 +93,7 @@ describe('AppController (e2e)', () => {
           expect(res.body.morningReport).toHaveProperty('enabled', true);
           expect(res.body.eveningReport).toHaveProperty('enabled', true);
         });
-    })
+    });
   });
 
   describe('Error handling', () => {
