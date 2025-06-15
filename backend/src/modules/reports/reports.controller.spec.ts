@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
 import { SchedulerService } from './scheduler.service';
+import { NewsService } from '../news/news.service';
 
 describe('ReportsController', () => {
   let controller: ReportsController;
@@ -19,6 +20,12 @@ describe('ReportsController', () => {
     getSchedulerStatus: jest.fn(),
   };
 
+  const mockNewsService = {
+    collectNews: jest.fn(),
+    getNewsStats: jest.fn(),
+    getLatestNews: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ReportsController],
@@ -30,6 +37,10 @@ describe('ReportsController', () => {
         {
           provide: SchedulerService,
           useValue: mockSchedulerService,
+        },
+        {
+          provide: NewsService,
+          useValue: mockNewsService,
         },
       ],
     }).compile();
