@@ -89,6 +89,12 @@ const Header: React.FC = () => {
                 >
                   분석
                 </Link>
+                <Link
+                  to='/testing'
+                  className='glass-button px-6 py-3 text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-semibold rounded-2xl transition-all duration-120 ease-fast-out backdrop-blur-extreme border-2 border-orange-200 dark:border-orange-800 hover:border-orange-400 dark:hover:bg-glass-black-border hover:scale-[1.02] transform will-change-transform'
+                >
+                  🧪 Testing
+                </Link>
               </div>
 
               {/* 테마 토글 */}

@@ -209,7 +209,68 @@ docker-compose down
 docker-compose logs -f
 ```
 
-  ## API Reference
+  ## Testing Framework
+
+This project includes a comprehensive testing framework for validating batch processing operations without waiting for scheduled jobs.
+
+### Testing Dashboard
+
+Access the testing dashboard at `/testing` in the frontend to:
+
+- **Monitor system health** - Check service status and metrics
+- **Create mock data** - Generate test news articles for testing
+- **Run test suites** - Execute automated test scenarios
+- **Manual testing** - Trigger batch operations manually
+- **Performance monitoring** - Track operation timing and resource usage
+
+### Test Suites
+
+#### News Collection Suite (`news-collection`)
+- Basic news collection validation
+- Performance testing (< 30 seconds)
+- Error handling verification
+
+#### Report Generation Suite (`report-generation`)  
+- Morning/evening report generation
+- Content structure validation
+- No-news scenario handling
+
+#### Integration Suite (`integration`)
+- End-to-end pipeline testing
+- Concurrent operation testing
+- Data consistency validation
+
+### Testing API Endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /test/health` | System health status |
+| `GET /test/suites` | Available test suites |
+| `POST /test/suites/:name/run` | Execute test suite |
+| `POST /test/data/mock-news` | Create mock news |
+| `DELETE /test/data/cleanup` | Clean test data |
+| `POST /reports/test/generate/:type` | Manual report generation |
+| `POST /reports/test/flow/full` | Complete pipeline test |
+
+### Running Tests
+
+```bash
+# Backend unit tests
+cd backend && npm run test
+
+# Backend E2E tests  
+cd backend && npm run test:e2e
+
+# Frontend tests
+cd frontend && npm run test
+
+# All tests
+npm run test:all
+```
+
+For detailed testing documentation, see [TESTING.md](./TESTING.md).
+
+## API Reference
 
 - `GET /reports` - List reports (paginated)
 - `GET /reports/:id` - Get specific report  
