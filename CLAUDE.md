@@ -93,9 +93,10 @@ docker-compose logs -f       # View logs
 - **Optional Midday**: 12:00 PM KST (env: `ENABLE_MIDDAY_REPORT=true`)
 - **Weekly Outlook**: Sundays 7:00 PM KST (env: `ENABLE_WEEKLY_REPORT=true`)
 
-### Manual Generation
-- API endpoint: `POST /reports/generate/:type` (type: 'morning' | 'evening')
-- Frontend trigger available in reports interface
+### Batch Processing Only
+- Reports are generated automatically by scheduled cron jobs
+- No manual generation endpoints to prevent unnecessary AI costs
+- System maintains cost control through automated scheduling
 
 ### News Sources Integration
 - **Korean**: 연합뉴스 경제, 매일경제
@@ -104,14 +105,13 @@ docker-compose logs -f       # View logs
 
 ## API Endpoints
 
-### Reports
+### Reports (Read-Only)
 - `GET /reports` - Paginated reports list
 - `GET /reports/:id` - Specific report details
-- `POST /reports/generate/:type` - Manual report generation
 
-### News & System
+### System & Monitoring
 - `GET /news/stats` - Collection statistics
-- `POST /news/collect` - Manual news collection
+- `GET /scheduler/status` - Batch job status
 - `GET /health` - Service health check
 
 ## Testing Strategy

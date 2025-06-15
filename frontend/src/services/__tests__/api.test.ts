@@ -122,47 +122,6 @@ describe('API Service', () => {
       });
     });
 
-    describe('generateReport', () => {
-      it('should generate morning report', async () => {
-        const mockReport = {
-          id: 1,
-          title: '오전 투자 리포트',
-          content: '테스트 내용',
-          summary: '테스트 요약',
-          reportType: 'morning',
-          createdAt: '2024-12-06T08:00:00Z',
-          updatedAt: '2024-12-06T08:00:00Z',
-        };
-
-        const mockResponse = { data: mockReport };
-        mockPost.mockResolvedValue(mockResponse);
-
-        const result = await reportsApi.generateReport('morning');
-
-        expect(mockPost).toHaveBeenCalledWith('/reports/generate/morning');
-        expect(result).toEqual(mockReport);
-      });
-
-      it('should generate evening report', async () => {
-        const mockReport = {
-          id: 2,
-          title: '오후 투자 리포트',
-          content: '테스트 내용',
-          summary: '테스트 요약',
-          reportType: 'evening',
-          createdAt: '2024-12-06T18:00:00Z',
-          updatedAt: '2024-12-06T18:00:00Z',
-        };
-
-        const mockResponse = { data: mockReport };
-        mockPost.mockResolvedValue(mockResponse);
-
-        const result = await reportsApi.generateReport('evening');
-
-        expect(mockPost).toHaveBeenCalledWith('/reports/generate/evening');
-        expect(result).toEqual(mockReport);
-      });
-    });
 
     describe('error handling', () => {
       it('should throw error when API call fails', async () => {
@@ -172,14 +131,6 @@ describe('API Service', () => {
         await expect(reportsApi.getReports()).rejects.toThrow(errorMessage);
       });
 
-      it('should handle timeout error', async () => {
-        const timeoutError = new Error('timeout');
-        mockPost.mockRejectedValue(timeoutError);
-
-        await expect(reportsApi.generateReport('morning')).rejects.toThrow(
-          'timeout',
-        );
-      });
     });
   });
 

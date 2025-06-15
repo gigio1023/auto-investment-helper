@@ -81,35 +81,19 @@ describe('AppController (e2e)', () => {
         });
     });
 
-    it('/reports/generate/morning (POST)', () => {
+    it('/reports/scheduler/status (GET)', () => {
       return request(app.getHttpServer())
-        .post('/reports/generate/morning')
-        .expect(201)
+        .get('/reports/scheduler/status')
+        .expect(200)
         .expect((res) => {
-          expect(res.body).toHaveProperty('success', true);
-          expect(res.body).toHaveProperty('report');
-          expect(res.body.report).toHaveProperty('id');
-          expect(res.body.report).toHaveProperty('title');
-          expect(res.body.report).toHaveProperty('content');
-          expect(res.body.report).toHaveProperty('summary');
-          expect(res.body.report.reportType).toBe('morning');
+          expect(res.body).toHaveProperty('morningReport');
+          expect(res.body).toHaveProperty('eveningReport');
+          expect(res.body).toHaveProperty('timezone', 'Asia/Seoul');
+          expect(res.body).toHaveProperty('currentTime');
+          expect(res.body.morningReport).toHaveProperty('enabled', true);
+          expect(res.body.eveningReport).toHaveProperty('enabled', true);
         });
-    }, 30000); // 30초 타임아웃 (AI 분석 시간 고려)
-
-    it('/reports/generate/evening (POST)', () => {
-      return request(app.getHttpServer())
-        .post('/reports/generate/evening')
-        .expect(201)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('success', true);
-          expect(res.body).toHaveProperty('report');
-          expect(res.body.report).toHaveProperty('id');
-          expect(res.body.report).toHaveProperty('title');
-          expect(res.body.report).toHaveProperty('content');
-          expect(res.body.report).toHaveProperty('summary');
-          expect(res.body.report.reportType).toBe('evening');
-        });
-    }, 30000); // 30초 타임아웃 (AI 분석 시간 고려)
+    })
   });
 
   describe('Error handling', () => {

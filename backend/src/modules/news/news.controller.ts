@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, Param } from '@nestjs/common';
+import { Controller, Get, Query, Param } from '@nestjs/common';
 import { NewsService } from './news.service';
 
 @Controller('news')
@@ -26,12 +26,4 @@ export class NewsController {
     return this.newsService.getUnprocessedNews();
   }
 
-  @Post('collect')
-  async collectNews(): Promise<{ message: string; timestamp: Date }> {
-    await this.newsService.collectNews();
-    return {
-      message: '뉴스 수집이 완료되었습니다.',
-      timestamp: new Date(),
-    };
-  }
 }

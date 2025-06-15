@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Param,
   Query,
   ParseIntPipe,
@@ -67,15 +66,4 @@ export class ReportsController {
     return this.reportsService.getReportsByDate(date);
   }
 
-  @Post('generate/:type')
-  async generateReport(
-    @Param('type') type: 'morning' | 'evening',
-  ): Promise<any> {
-    if (type !== 'morning' && type !== 'evening') {
-      throw new BadRequestException(
-        '리포트 타입은 morning 또는 evening이어야 합니다.',
-      );
-    }
-    return this.schedulerService.generateManualReport(type);
-  }
 }

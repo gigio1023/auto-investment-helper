@@ -152,31 +152,6 @@ export class SchedulerService {
     }
   }
 
-  // 수동 리포트 생성 (API 호출 시 사용)
-  async generateManualReport(type: 'morning' | 'evening'): Promise<any> {
-    this.logger.log(`🔧 수동 ${type} 리포트 생성 요청`);
-
-    try {
-      const startTime = Date.now();
-      const report = await this.reportsService.generateDailyReport(type);
-      const duration = Math.round((Date.now() - startTime) / 1000);
-
-      this.logger.log(
-        `✅ 수동 ${type} 리포트 생성 완료 (${duration}초 소요) - ID: ${report.id}`,
-      );
-
-      return {
-        success: true,
-        report,
-        duration,
-        generatedAt: new Date(),
-        type: 'manual',
-      };
-    } catch (error) {
-      this.logger.error(`❌ 수동 ${type} 리포트 생성 실패:`, error);
-      throw error;
-    }
-  }
 
   // 리포트 생성 성공 알림
   private notifyReportGenerated(
