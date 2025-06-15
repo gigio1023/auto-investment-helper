@@ -51,15 +51,15 @@ Investment reports are automatically generated via scheduled batch jobs twice da
 sequenceDiagram
     participant SCH as Scheduler
     participant USR as User
-    participant API as NestJS API
+    participant API as "NestJS API"
     participant REP as ReportsService
     participant NEW as NewsService
     participant LLM as LLMService
     participant DB as Database
-    participant RSS as RSS Feeds
-    participant AI as AI Provider
+    participant RSS as "RSS Feeds"
+    participant AI as "AI Provider"
 
-    Note over SCH: Automated Batch Processing Only
+    Note over SCH: "Automated Batch Processing Only"
     SCH->>REP: triggerScheduledGeneration()
     REP->>NEW: collectNews()
     NEW->>RSS: Fetch news articles
@@ -76,11 +76,12 @@ sequenceDiagram
     LLM-->>REP: Return final report content
     REP->>DB: Save generated report
     
-    Note over USR, API: Read-Only Access
-    USR->>API: GET /reports
+    Note over USR, API: "Read-Only Access"
+    USR->>API: "GET /reports"
     API->>DB: Fetch existing reports
     DB-->>API: Return reports
     API-->>USR: Display reports
+```
 
 ## News Collection Process
 
