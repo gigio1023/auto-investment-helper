@@ -15,18 +15,23 @@
   --glass-border-strong: rgba(255, 255, 255, 0.8);
   --glass-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25);
   --glass-shadow-hover: 0 35px 60px -12px rgba(0, 0, 0, 0.35);
-  --glass-reflection: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%, rgba(255, 255, 255, 0.1) 100%);
-  
+  --glass-reflection: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+
   /* 텍스트 대비 - 부드럽게 유지 */
   --text-primary: rgba(30, 30, 30, 0.9);
   --text-secondary: rgba(60, 60, 60, 0.75);
   --text-tertiary: rgba(90, 90, 90, 0.6);
-  
+
   /* 액센트 컬러 - 부드러운 톤 유지 */
-  --accent-primary: #6B94FF;
-  --accent-secondary: #4ADE80;
-  --accent-warning: #FFA726;
-  --accent-danger: #EF5350;
+  --accent-primary: #6b94ff;
+  --accent-secondary: #4ade80;
+  --accent-warning: #ffa726;
+  --accent-danger: #ef5350;
 }
 
 .dark {
@@ -38,18 +43,23 @@
   --glass-border-strong: rgba(255, 255, 255, 0.5);
   --glass-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.8);
   --glass-shadow-hover: 0 35px 60px -12px rgba(0, 0, 0, 0.9);
-  --glass-reflection: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%, rgba(255, 255, 255, 0.05) 100%);
-  
+  --glass-reflection: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+
   /* 다크 모드 텍스트 대비 개선 */
   --text-primary: rgba(255, 255, 255, 0.95);
   --text-secondary: rgba(255, 255, 255, 0.8);
   --text-tertiary: rgba(255, 255, 255, 0.65);
-  
+
   /* 다크 모드 액센트 */
-  --accent-primary: #64B5F6;
-  --accent-secondary: #81C784;
-  --accent-warning: #FFB74D;
-  --accent-danger: #E57373;
+  --accent-primary: #64b5f6;
+  --accent-secondary: #81c784;
+  --accent-warning: #ffb74d;
+  --accent-danger: #e57373;
 }
 
 /* 기본 스타일 */
@@ -59,8 +69,18 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'Roboto',
+    'Oxygen',
+    'Ubuntu',
+    'Cantarell',
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -70,12 +90,18 @@ body {
 }
 
 .dark body {
-  background: linear-gradient(135deg, #0c0e27 0%, #1a1a2e 30%, #16213e 70%, #0f3460 100%);
+  background: linear-gradient(
+    135deg,
+    #0c0e27 0%,
+    #1a1a2e 30%,
+    #16213e 70%,
+    #0f3460 100%
+  );
 }
 
 code {
-  font-family: 'JetBrains Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 /* 극명한 글래스모피즘 효과 */
@@ -117,14 +143,19 @@ code {
   backdrop-filter: blur(50px) saturate(220%);
   -webkit-backdrop-filter: blur(50px) saturate(220%);
   border: 2px solid var(--glass-border-strong);
-  box-shadow: 
+  box-shadow:
     var(--glass-shadow),
     inset 0 1px 0 rgba(255, 255, 255, 0.4),
     inset 0 -1px 0 rgba(255, 255, 255, 0.1);
   border-radius: 28px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 /* 극명한 유리 텍스처와 반사 */
@@ -135,50 +166,62 @@ code {
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     var(--glass-reflection),
-    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 60%),
-    radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+    radial-gradient(
+      circle at 30% 20%,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 70% 80%,
+      rgba(255, 255, 255, 0.1) 0%,
+      transparent 60%
+    );
   pointer-events: none;
   z-index: 1;
 }
 
 .glass-card:hover {
-  transform: translateY(-12px) scale(1.03);
-  box-shadow: 
-    var(--glass-shadow-hover),
+  transform: translateZ(0) translateY(-4px) scale(1.015);
+  box-shadow:
+    0 20px 40px -12px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.6),
     inset 0 -1px 0 rgba(255, 255, 255, 0.2),
-    0 0 40px rgba(107, 148, 255, 0.2);
+    0 0 25px rgba(107, 148, 255, 0.15);
   border-color: var(--glass-border-strong);
 }
 
 .dark .glass-card:hover {
-  box-shadow: 
-    var(--glass-shadow-hover),
+  box-shadow:
+    0 20px 40px -12px rgba(0, 0, 0, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.3),
     inset 0 -1px 0 rgba(255, 255, 255, 0.1),
-    0 0 40px rgba(100, 181, 246, 0.3);
+    0 0 25px rgba(100, 181, 246, 0.2);
 }
 
 /* 강화된 다층 글래스 효과 */
 .glass-layer-primary {
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.4) 0%, 
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
     rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.3) 100%);
+    rgba(255, 255, 255, 0.3) 100%
+  );
   backdrop-filter: blur(25px) saturate(180%);
   border: 2px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 
+  box-shadow:
     0 20px 40px rgba(31, 38, 135, 0.3),
     inset 0 2px 0 rgba(255, 255, 255, 0.7),
     inset 0 -1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateZ(0);
 }
 
 .glass-layer-secondary {
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(60px) saturate(200%);
   border: 2px solid rgba(255, 255, 255, 0.4);
+  transform: translateZ(0);
 }
 
 /* 세련된 그라데이션 - 부드러운 색상 유지 */
@@ -205,10 +248,10 @@ code {
 
 /* 부드러운 애니메이션 */
 .smooth-transition {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 극명한 글래스 버튼 */
+/* 극명한 글래스 버튼 - 성능 최적화 */
 .glass-button {
   background: var(--glass-bg-strong);
   backdrop-filter: blur(45px) saturate(200%);
@@ -217,12 +260,18 @@ code {
   padding: 18px 28px;
   color: var(--text-primary);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    transform 0.12s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.12s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.12s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.12s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  box-shadow: 
+  box-shadow:
     0 15px 35px rgba(31, 38, 135, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .glass-button::before {
@@ -232,13 +281,15 @@ code {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.4), 
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
     rgba(255, 255, 255, 0.6),
     rgba(255, 255, 255, 0.4),
-    transparent);
-  transition: left 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    transparent
+  );
+  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-button::after {
@@ -259,12 +310,12 @@ code {
 
 .glass-button:hover {
   background: rgba(255, 255, 255, 0.4);
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 
-    0 25px 50px rgba(31, 38, 135, 0.3),
+  transform: translateZ(0) translateY(-2px) scale(1.01);
+  box-shadow:
+    0 15px 30px rgba(31, 38, 135, 0.25),
     inset 0 2px 0 rgba(255, 255, 255, 0.6),
     inset 0 -1px 0 rgba(255, 255, 255, 0.2),
-    0 0 30px rgba(107, 148, 255, 0.3);
+    0 0 20px rgba(107, 148, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.8);
 }
 
@@ -280,14 +331,22 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(100, 100, 100, 0.4), rgba(100, 100, 100, 0.6));
+  background: linear-gradient(
+    180deg,
+    rgba(100, 100, 100, 0.4),
+    rgba(100, 100, 100, 0.6)
+  );
   border-radius: 12px;
   border: 2px solid rgba(255, 255, 255, 0.2);
   transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(100, 100, 100, 0.6), rgba(100, 100, 100, 0.8));
+  background: linear-gradient(
+    180deg,
+    rgba(100, 100, 100, 0.6),
+    rgba(100, 100, 100, 0.8)
+  );
 }
 
 .dark ::-webkit-scrollbar-track {
@@ -295,12 +354,20 @@ code {
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.3)
+  );
   border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.4));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0.4)
+  );
 }
 
 /* 접근성 개선 */
@@ -323,21 +390,27 @@ code {
 
 /* 접근성을 위한 미디어 쿼리 */
 @media (prefers-reduced-transparency: reduce) {
-  .glass, .glass-card, .glass-button {
+  .glass,
+  .glass-card,
+  .glass-button {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: none;
   }
-  
-  .dark .glass, .dark .glass-card, .dark .glass-button {
+
+  .dark .glass,
+  .dark .glass-card,
+  .dark .glass-button {
     background: rgba(30, 30, 30, 0.95);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .glass-button, .glass-card, .smooth-transition {
+  .glass-button,
+  .glass-card,
+  .smooth-transition {
     transition: none;
   }
-  
+
   .glass-button::before {
     display: none;
   }

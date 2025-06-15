@@ -96,16 +96,18 @@ module.exports = {
         ],
       },
       animation: {
-        'fade-in': 'fadeIn 0.6s ease-in-out',
-        'slide-up': 'slideUp 0.4s ease-out',
-        'slide-down': 'slideDown 0.4s ease-out',
-        'scale-up': 'scaleUp 0.3s ease-out',
+        'fade-in': 'fadeIn 0.3s ease-out',
+        'slide-up': 'slideUp 0.2s ease-out',
+        'slide-down': 'slideDown 0.2s ease-out',
+        'scale-up': 'scaleUp 0.15s ease-out',
         'bounce-slow': 'bounce 3s infinite',
         'pulse-slow': 'pulse 3s infinite',
         'glow': 'glow 2s ease-in-out infinite alternate',
         'shimmer': 'shimmer 2s linear infinite',
-        'float': 'float 3s ease-in-out infinite',
+        'float': 'float 6s ease-in-out infinite',
         'glass-shine': 'glassShine 3s ease-in-out infinite',
+        'hover-fast': 'hoverFast 0.15s ease-out',
+        'hover-bounce': 'hoverBounce 0.2s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -144,6 +146,15 @@ module.exports = {
             background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%, rgba(255, 255, 255, 0.1) 100%)'
           },
         },
+        hoverFast: {
+          '0%': { transform: 'scale(1) translateY(0)' },
+          '100%': { transform: 'scale(1.02) translateY(-2px)' },
+        },
+        hoverBounce: {
+          '0%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.05)' },
+          '100%': { transform: 'scale(1.02)' },
+        },
       },
       backdropBlur: {
         xs: '2px',
@@ -171,6 +182,7 @@ module.exports = {
         'glow-green': '0 0 40px rgba(74, 222, 128, 0.5)',
         'glow-orange': '0 0 40px rgba(255, 167, 38, 0.5)',
         'extreme': '0 40px 80px -12px rgba(0, 0, 0, 0.4)',
+        'hover-lift': '0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
       },
       spacing: {
         '18': '4.5rem',
@@ -180,6 +192,18 @@ module.exports = {
       borderRadius: {
         '4xl': '2rem',
         '5xl': '2.5rem',
+      },
+      transitionTimingFunction: {
+        'bounce-out': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        'fast-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'smooth': 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      },
+      transitionDuration: {
+        '50': '50ms',
+        '75': '75ms',
+        '120': '120ms',
+        '180': '180ms',
+        '250': '250ms',
       },
     },
   },

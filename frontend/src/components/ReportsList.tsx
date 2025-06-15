@@ -4,14 +4,24 @@ import { reportsApi } from '../services/api';
 import { Report } from '../types';
 import LoadingSpinner from './LoadingSpinner';
 
+// 재사용 가능한 스타일 상수들 - 컴포넌트 외부로 이동하여 성능 최적화
+const STATS_CARD_CLASS =
+  'glass-layer-primary p-8 rounded-3xl backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border shadow-glass hover:shadow-hover-lift transition-all duration-180 ease-fast-out hover:scale-[1.02] transform will-change-transform';
+const ACTION_BUTTON_CLASS =
+  'glass-button px-8 py-4 rounded-2xl font-bold transition-all duration-120 ease-fast-out shadow-glass transform hover:scale-[1.02] disabled:transform-none backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border will-change-transform';
+const FILTER_BUTTON_CLASS =
+  'glass-button px-8 py-4 rounded-2xl text-lg font-semibold transition-all duration-120 ease-fast-out backdrop-blur-extreme border-2 shadow-glass hover:shadow-hover-lift hover:scale-[1.02] transform will-change-transform';
+
+type FilterType = 'all' | 'morning' | 'evening';
+
 const ReportsList: React.FC = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [filter, setFilter] = useState<FilterType>('all');
   const [generating, setGenerating] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'morning' | 'evening'>('all');
 
   const limit = 10;
 
@@ -96,7 +106,7 @@ const ReportsList: React.FC = () => {
 
           {/* 극명한 글래스 통계 카드들 */}
           <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-            <div className='glass-layer-primary p-8 rounded-3xl backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border shadow-glass hover:shadow-glass-hover transition-all duration-300 hover:scale-105'>
+            <div className={STATS_CARD_CLASS}>
               <div className='text-center'>
                 <div className='text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2'>
                   {total}
@@ -106,7 +116,7 @@ const ReportsList: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className='glass-layer-primary p-8 rounded-3xl backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border shadow-glass hover:shadow-glass-hover transition-all duration-300 hover:scale-105'>
+            <div className={STATS_CARD_CLASS}>
               <div className='text-center'>
                 <div className='text-4xl font-bold text-financial-green dark:text-financial-green-light mb-2'>
                   {
@@ -119,7 +129,7 @@ const ReportsList: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className='glass-layer-primary p-8 rounded-3xl backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border shadow-glass hover:shadow-glass-hover transition-all duration-300 hover:scale-105'>
+            <div className={STATS_CARD_CLASS}>
               <div className='text-center'>
                 <div className='text-4xl font-bold text-financial-gold dark:text-financial-gold-light mb-2'>
                   {
@@ -132,7 +142,7 @@ const ReportsList: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className='glass-layer-primary p-8 rounded-3xl backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border shadow-glass hover:shadow-glass-hover transition-all duration-300 hover:scale-105'>
+            <div className={STATS_CARD_CLASS}>
               <div className='text-center'>
                 <div className='text-4xl font-bold text-gray-600 dark:text-gray-400 mb-2'>
                   {/* TODO: Replace with actual trust score calculation when Report type includes trustScore */}
@@ -150,7 +160,7 @@ const ReportsList: React.FC = () => {
             <button
               onClick={() => generateReport('morning')}
               disabled={generating}
-              className='glass-button px-8 py-4 bg-gradient-to-r from-financial-gold/30 to-financial-gold/20 hover:from-financial-gold/40 hover:to-financial-gold/30 disabled:from-gray-400/20 disabled:to-gray-500/20 text-gray-900 dark:text-white rounded-2xl font-bold transition-all duration-400 shadow-glass hover:shadow-glow-orange transform hover:scale-105 disabled:transform-none backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border'
+              className={`${ACTION_BUTTON_CLASS} bg-gradient-to-r from-financial-gold/30 to-financial-gold/20 hover:from-financial-gold/40 hover:to-financial-gold/30 disabled:from-gray-400/20 disabled:to-gray-500/20 text-gray-900 dark:text-white hover:shadow-glow-orange`}
             >
               <div className='flex items-center space-x-3'>
                 <span className='text-2xl'>🌅</span>
@@ -163,7 +173,7 @@ const ReportsList: React.FC = () => {
             <button
               onClick={() => generateReport('evening')}
               disabled={generating}
-              className='glass-button px-8 py-4 bg-gradient-to-r from-primary-500/30 to-primary-600/20 hover:from-primary-500/40 hover:to-primary-600/30 disabled:from-gray-400/20 disabled:to-gray-500/20 text-gray-900 dark:text-white rounded-2xl font-bold transition-all duration-400 shadow-glass hover:shadow-glow-primary transform hover:scale-105 disabled:transform-none backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border'
+              className={`${ACTION_BUTTON_CLASS} bg-gradient-to-r from-primary-500/30 to-primary-600/20 hover:from-primary-500/40 hover:to-primary-600/30 disabled:from-gray-400/20 disabled:to-gray-500/20 text-gray-900 dark:text-white hover:shadow-glow-primary`}
             >
               <div className='flex items-center space-x-3'>
                 <span className='text-2xl'>🌆</span>
@@ -203,7 +213,7 @@ const ReportsList: React.FC = () => {
           <button
             key={item.key}
             onClick={() => setFilter(item.key)}
-            className={`glass-button px-8 py-4 rounded-2xl text-lg font-semibold transition-all duration-300 backdrop-blur-extreme border-2 shadow-glass hover:shadow-glass-hover hover:scale-105 ${
+            className={`${FILTER_BUTTON_CLASS} ${
               filter === item.key
                 ? 'bg-glass-white-border dark:bg-glass-black-border border-primary-500 text-primary-600 dark:text-primary-400 shadow-glow-primary'
                 : 'bg-glass-white dark:bg-glass-black border-glass-white-border dark:border-glass-black-border text-gray-700 dark:text-gray-300 hover:border-primary-400'
@@ -219,20 +229,20 @@ const ReportsList: React.FC = () => {
         {filteredReports.map((report, index) => (
           <div
             key={report.id}
-            className='group glass-card p-8 hover:scale-[1.01] transition-all duration-500 backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border shadow-glass hover:shadow-extreme hover:shadow-glow-primary'
-            style={{ animationDelay: `${index * 0.1}s` }}
+            className='group glass-card p-8 hover:scale-[1.008] transition-all duration-180 ease-fast-out backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border shadow-glass hover:shadow-extreme hover:shadow-glow-primary will-change-transform transform'
+            style={{ animationDelay: `${index * 0.05}s` }}
           >
             {/* 카드 헤더 */}
             <div className='flex items-start justify-between mb-6'>
               <div className='flex items-center space-x-6'>
                 <div className='relative'>
-                  <div className='w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-glass group-hover:shadow-glow-primary transition-all duration-500 transform group-hover:scale-110'>
+                  <div className='w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-glass group-hover:shadow-glow-primary transition-all duration-180 ease-fast-out transform group-hover:scale-105 will-change-transform'>
                     <span className='text-white text-2xl drop-shadow-lg'>
                       {getReportIcon(report.reportType)}
                     </span>
                   </div>
                   {/* 글로우 효과 */}
-                  <div className='absolute inset-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 opacity-0 blur-lg group-hover:opacity-30 transition-opacity duration-500'></div>
+                  <div className='absolute inset-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 opacity-0 blur-lg group-hover:opacity-20 transition-opacity duration-180'></div>
                 </div>
                 <div>
                   <div className='flex items-center space-x-4 mb-2'>
@@ -251,7 +261,7 @@ const ReportsList: React.FC = () => {
 
               <Link
                 to={`/reports/${report.id}`}
-                className='glass-button px-6 py-3 bg-primary-500/20 hover:bg-primary-500/30 text-primary-700 dark:text-primary-300 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border'
+                className='glass-button px-6 py-3 bg-primary-500/20 hover:bg-primary-500/30 text-primary-700 dark:text-primary-300 rounded-2xl font-bold transition-all duration-120 ease-fast-out transform hover:scale-[1.02] backdrop-blur-extreme border-2 border-glass-white-border dark:border-glass-black-border will-change-transform'
               >
                 자세히 보기 →
               </Link>
