@@ -1,10 +1,20 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+
+// Mock the Link component before importing Header
+const MockLink = ({ children, to }: { children: React.ReactNode; to: string }) => (
+  <a href={to}>{children}</a>
+);
+
+jest.mock('react-router-dom', () => ({
+  Link: MockLink,
+}));
+
+// Now import Header after mocking
 import Header from '../Header';
 
 const renderWithRouter = (component: React.ReactElement) => {
-  return render(<BrowserRouter>{component}</BrowserRouter>);
+  return render(component);
 };
 
 describe('Header Component', () => {

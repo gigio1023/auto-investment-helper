@@ -93,11 +93,12 @@ export class ReportsController {
     this.logger.log(`🧪 Test: Manual ${type} report generation started`);
     const startTime = new Date();
 
-    try {
-      if (type !== 'morning' && type !== 'evening') {
-        throw new BadRequestException('Type must be "morning" or "evening"');
-      }
+    // Validate type parameter first
+    if (type !== 'morning' && type !== 'evening') {
+      throw new BadRequestException('Type must be "morning" or "evening"');
+    }
 
+    try {
       const report = await this.reportsService.generateDailyReport(type);
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();

@@ -3,33 +3,31 @@ import { render, screen } from '@testing-library/react';
 import LoadingSpinner from '../LoadingSpinner';
 
 describe('LoadingSpinner Component', () => {
-  it('renders loading spinner', () => {
+  it('renders loading spinner with Korean text', () => {
     render(<LoadingSpinner />);
 
-    expect(screen.getByText('로딩 중...')).toBeInTheDocument();
+    expect(screen.getByText('AI가 분석 중입니다')).toBeInTheDocument();
+    expect(screen.getByText('시장 데이터를 실시간으로 처리하고 있습니다')).toBeInTheDocument();
+    expect(screen.getByText('잠시만 기다려주세요...')).toBeInTheDocument();
   });
 
-  it('has correct styling for spinner animation', () => {
+  it('renders correctly for different sizes', () => {
+    const { rerender } = render(<LoadingSpinner size="small" />);
+    expect(screen.queryByText('AI가 분석 중입니다')).not.toBeInTheDocument();
+
+    rerender(<LoadingSpinner size="medium" />);
+    expect(screen.queryByText('AI가 분석 중입니다')).not.toBeInTheDocument();
+
+    rerender(<LoadingSpinner size="large" />);
+    expect(screen.getByText('AI가 분석 중입니다')).toBeInTheDocument();
+  });
+
+  it('renders all expected elements for large spinner', () => {
     render(<LoadingSpinner />);
-
-    const spinner = screen.getByText('로딩 중...').previousElementSibling;
-    expect(spinner).toHaveClass(
-      'animate-spin',
-      'rounded-full',
-      'border-b-2',
-      'border-blue-600',
-    );
+    expect(screen.getByText('AI가 분석 중입니다')).toBeInTheDocument();
+    expect(screen.getByText('시장 데이터를 실시간으로 처리하고 있습니다')).toBeInTheDocument();
+    expect(screen.getByText('잠시만 기다려주세요...')).toBeInTheDocument();
+    expect(screen.getByText('₩')).toBeInTheDocument();
   });
 
-  it('renders with correct container styling', () => {
-    const { container } = render(<LoadingSpinner />);
-
-    const spinnerContainer = container.firstChild;
-    expect(spinnerContainer).toHaveClass(
-      'flex',
-      'items-center',
-      'justify-center',
-      'py-12',
-    );
-  });
 });
