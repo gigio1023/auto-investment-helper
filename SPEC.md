@@ -2,7 +2,7 @@
 
 Status: active long-term specification.
 
-Last aligned: 2026-05-27.
+Last aligned: 2026-06-01.
 
 ## Spec Authority
 
@@ -18,17 +18,22 @@ The first monetization priority is self-funded capital allocation: the operator 
 
 Darwinex/Zero is a second-order path. It matters only after the self-funded capital deployment-grade signal and track record exist. The repository must not prioritize Darwinex adapter work ahead of the self-funded capital evidence loop.
 
-The current milestone is still not automatic production/live trading. It is the validated capital-allocation loop:
+The current milestone is still not automatic production/live trading. It is the
+validated capital-allocation loop, now centered on prospective LLM agent
+evaluation instead of treating historical backtests as the final proof:
 
 ```text
 research corpus
   -> hypothesis registry
   -> point-in-time and vintage data
-  -> parallel feature and alpha jobs
-  -> LEAN / QuantConnect validation
+  -> numeric/ML baselines and selected historical backtests
+  -> active LLM agent decision ledger
+  -> prospective paper/shadow agent evaluation
+  -> forecast scoring and risk-gated action review
+  -> LEAN / QuantConnect validation for baselines, replay, and sanity checks
   -> portfolio and risk consolidation
-  -> paper trading/shadow trading evidence
   -> reconciliation
+  -> simulated broker adapter rehearsal
   -> learning and promotion ledger
   -> self-funded capital broker-write candidate
 ```
@@ -41,12 +46,28 @@ The project hypothesis is:
 
 > A point-in-time parallel research pipeline that combines simple numeric baselines, ML features, and LLM-derived features can produce after-cost, benchmark-relative returns that survive QuantConnect Cloud validation, current paper trading/shadow trading artifacts, reconciliation, and later self-funded capital execution.
 
-The Alpha Architect corpus review tightened the priority:
+That historical-backtest-first hypothesis is superseded for active LLM work.
+The active hypothesis is now:
+
+> Classical numeric/ML baselines should remain backtestable, but an active LLM
+> investment committee should be evaluated mainly through prospective
+> paper/shadow decision ledgers, forecast scoring, risk-gated action plans, and
+> capital-staircase promotion. Historical backtests remain useful as baseline,
+> replay, and failure-discovery tools, not as the sole proof of LLM-agent
+> profitability.
+
+The Alpha Architect corpus review still tightens the priority:
 
 1. Start with robust, boring baselines: liquid ETF trend following, defensive allocation, momentum, daily-return features, and cost-aware rebalancing.
-2. Add LLM-derived alpha only as typed features and ablations, not as an allocator.
-3. Treat factor crowding, factor valuation, anomaly demand, macro regimes, and filing language as research hypotheses that need broader data and vintage controls before promotion.
-4. Keep Darwinex/Zero deferred until the self-funded capital path can produce an independently defensible track record.
+2. Use LLMs actively as an investment committee that emits typed forecasts,
+   theses, counter-theses, invalidation conditions, and action plans.
+3. Keep final sizing, deterministic risk gates, execution intent, broker writes, and
+   reconciliation outside the LLM boundary.
+4. Treat factor crowding, factor valuation, anomaly demand, macro regimes, and
+   filing language as research hypotheses that need broader data and vintage
+   controls before promotion.
+5. Keep Darwinex/Zero deferred until the self-funded capital path can produce
+   an independently defensible track record.
 
 ## Parallelization Principle
 
@@ -58,6 +79,7 @@ research article ingestion
   || market/news/filing/macro ingestion
   || per-symbol feature generation
   || LLM-derived feature jobs
+  || active LLM agent decisions for independent symbols/episodes
   || numeric-only / LLM-only / combined ablations
   || parameter and backtest sweeps
   || QuantConnect Cloud artifact page imports
@@ -68,7 +90,7 @@ Then force a single canonical path:
 ```text
 promotion ledger
   -> portfolio target consolidation
-  -> deterministic risk cuts
+  -> deterministic risk gate
   -> paper trading/shadow trading execution intent
   -> reconciliation
   -> broker-write pre-trade risk check
@@ -93,6 +115,7 @@ Read these documents in order before changing core behavior:
 11. [Dual Monetization And Operations](docs/spec/09-dual-monetization-and-operations.md): self-funded capital priority, Oracle Cloud ARM operations, Darwinex/Zero posture, strategy corpus, and vintage-data rules.
 12. [Parallel Research Pipeline](docs/spec/10-parallel-research-factory.md): parallel job boundaries, idempotency, multiple-testing bias controls, and single-writer execution gates.
 13. [Full Implementation Plan](docs/spec/11-full-implementation-plan.md): workstreams, dependencies, acceptance criteria, and verification evidence needed to complete the full spec.
+14. [Active LLM Agent Evaluation](docs/spec/12-active-llm-agent-evaluation.md): prospective agent arena, forecast scoring, historical episode replay, and capital-staircase promotion.
 
 Supporting docs:
 
@@ -114,8 +137,9 @@ flowchart TB
         DATA["Market/news/filing/macro ingest"]
         FEAT["Per-symbol feature jobs"]
         LLM["LLM-derived feature jobs"]
+        AGENT["Active LLM agent decisions"]
         ABL["Ablations<br/>numeric / LLM / combined"]
-        BT["Backtest and parameter sweeps"]
+        BT["Baseline backtests<br/>episode replay"]
         CLOUD["Cloud artifact imports"]
     end
 
@@ -124,20 +148,32 @@ flowchart TB
     HYP --> ABL
     FEAT --> ABL
     LLM --> ABL
+    FEAT --> AGENT
+    HYP --> AGENT
     ABL --> BT
     BT --> CLOUD
 
-    CLOUD --> LEDGER["Promotion ledger<br/>single evidence set"]
-    LEDGER --> ALPHA["Approved AlphaDecision"]
-    ALPHA --> LEAN["LEAN Insight"]
-    LEAN --> TARGET["Portfolio targets"]
-    TARGET --> RISK["Deterministic risk cuts"]
+    AGENT --> PLAN["Action-plan candidate<br/>no broker payload"]
+    CLOUD --> LEDGER["Capital allocation ledger<br/>all variants retained"]
+    SCORE --> LEDGER
+    LEDGER --> TARGET["Portfolio targets"]
+    TARGET --> RISK["Deterministic risk gate"]
+    PLAN --> RISK
+    RISK --> ARENA["Prospective paper/shadow arena"]
+    ARENA --> SCORE["Forecast scoring<br/>Brier / log / calibration"]
     RISK --> PAPER["Paper trading/shadow trading intent"]
     PAPER --> RECON["Reconciliation"]
-    RECON --> PREFLIGHT["Broker-write pre-trade risk check<br/>blocked until spec"]
+    RECON --> SIM["Simulated broker adapter rehearsal<br/>contract only"]
+    SIM --> PREFLIGHT["Broker-write pre-trade risk check<br/>blocked until spec"]
 ```
 
-The control plane orchestrates jobs, persists validation artifacts, and enforces promotion policy. LEAN owns strategy runtime semantics. LLMs produce typed LLM-derived features and risk judgments. Broker-write paths remain blocked until a user-approved broker-write implementation spec exists.
+The control plane orchestrates jobs, persists validation artifacts, and enforces
+promotion policy. LEAN owns strategy runtime semantics for backtestable
+baselines and replay. LLMs can produce typed LLM-derived features and active
+agent decisions, but only as forecasts, theses, risk notes, and action plans.
+They do not own final order quantity, broker payloads, credentials, or
+account mutation. Broker-write paths remain blocked until a user-approved
+broker-write implementation spec exists.
 
 ## Implementation Plan Index
 
@@ -149,9 +185,13 @@ Implementation priority:
 parallel research pipeline
   -> data/vintage foundation
   -> simple baselines
-  -> LLM-derived feature ablations
-  -> QuantConnect Cloud artifacts
-  -> paper trading/shadow trading and reconciliation
+  -> active LLM agent decision ledger
+  -> prospective paper/shadow agent evaluation
+  -> forecast scoring and calibration
+  -> LLM-derived feature ablations and historical episode replay
+  -> QuantConnect Cloud artifacts for backtestable paths
+  -> reconciliation
+  -> simulated broker adapter rehearsal
   -> Oracle Cloud ARM continuous operation
   -> broker-read-only reconciliation
   -> user-approved broker-write spec
@@ -186,6 +226,45 @@ type AlphaDecision = {
   abstainReason?: string;
 };
 ```
+
+Active LLM agent decisions are separate from LEAN `AlphaDecision` records:
+
+```ts
+type AgentDecisionRecord = {
+  id: string;
+  runId: string;
+  strategyVariant: string;
+  agentId: string;
+  symbol: string;
+  asOf: string;
+  availableAt: string;
+  horizonHours: number;
+  status: "proposed" | "abstained" | "blocked";
+  direction: "up" | "down" | "flat";
+  forecastProbabilityUp: number;
+  expectedReturnBps?: number;
+  confidence: number;
+  thesis?: string;
+  counterThesis?: string;
+  invalidationCondition?: string;
+  proposedAction: Record<string, unknown>;
+  riskNotes: string[];
+  sourceSnapshotRefs: string[];
+  evidenceRefs: string[];
+  model: string;
+  promptVersion: string;
+  policyVersion: string;
+  toolPolicyVersion: string;
+  memoryPolicyVersion: string;
+  inputHash: string;
+  outputHash: string;
+  blockerReasons: string[];
+};
+```
+
+`evidenceRefs` remains a legacy persistence field for compatibility. New
+schemas should prefer `sourceRefs`, `sourceSnapshotRefs`, or
+`supportingEvidenceRefs` unless they are matching an existing database column.
 
 Parallel jobs must use a comparable job schema:
 
@@ -232,6 +311,7 @@ Fast path:
 Slow path:
 
 - numeric features plus LLM-derived alpha;
+- active LLM agent decisions for paper/shadow evaluation;
 - uses recent news, filings, macro context, portfolio state, and bull/bear review;
 - used for new positions, concentration changes, strategy selection, and event-driven trades;
 - expected latency: one to several minutes;
@@ -239,19 +319,27 @@ Slow path:
 
 Research path:
 
-- strategy creation, corpus extraction, model training, walk-forward validation, cloud backtests, ablations, and failure review;
+- strategy creation, corpus extraction, model training, walk-forward validation,
+  cloud backtests, ablations, historical episode replay, active LLM agent
+  evaluation, and failure review;
 - expected latency: minutes to hours;
 - should maximize bounded parallelism while recording all variants, including failures.
 
 ## Verification Summary
 
-Testing is important, but unit tests are not the project goal. Runtime claims require direct commands and artifacts: LEAN backtests, QuantConnect Cloud backtests/imports, alpha replay, paper trading/shadow trading cycles, pre-trade risk checks, and reconciliation.
+Testing is important, but unit tests are not the project goal. Runtime claims
+require direct commands and artifacts: LEAN backtests, QuantConnect Cloud
+backtests/imports where relevant, alpha replay, active LLM agent decision
+ledgers, forecast labels, paper trading/shadow trading cycles, pre-trade risk
+checks, and reconciliation.
 
 Self-funded capital promotion reports must include:
 
 - hypothesis id and research refs;
 - data vintage and point-in-time status;
-- numeric-only, LLM-only, and combined ablations where applicable;
+- numeric-only, LLM-only, active-agent, and combined ablations where applicable;
+- forecast scoring, calibration, abstain, blocked, and risk-veto counts for
+  active LLM agent variants;
 - benchmark-relative and absolute returns;
 - after-cost and tax-context assumptions;
 - drawdown, volatility, turnover, liquidity, and slippage;
@@ -266,6 +354,7 @@ Self-funded capital promotion reports must include:
 - HFT, market making, tick scalping, unrestricted margin, options, futures, shorts, or derivatives;
 - Darwinex/Zero implementation before self-funded capital deployment-grade evidence exists;
 - LLM free text directly placing broker orders;
+- LLM action plans treated as final portfolio targets or broker payloads;
 - local simulator, local sample data, or static fixtures treated as promotion evidence;
 - hidden backtest selection or only storing winning runs;
 - broker credentials in frontend, LLM prompts, logs, or research artifacts;
@@ -279,8 +368,12 @@ Before any broker-write implementation spec can be approved, the repository must
 
 - a hypothesis registry with accepted/rejected strategy candidates;
 - point-in-time alpha decisions with no-lookahead evidence;
-- at least one durable numeric baseline with Cloud and current paper trading/shadow trading evidence;
-- ablation evidence showing whether LLM-derived alpha improves the baseline;
+- at least one durable numeric baseline with Cloud and current paper
+  trading/shadow trading evidence;
+- prospective active LLM agent evaluation records with forecast scores and
+  risk-gated action plans;
+- ablation evidence showing whether LLM-derived features or active agent
+  decisions improve the baseline after costs and risk vetoes;
 - multiple-testing bias checks;
 - cost, slippage, turnover, and tax-context reports;
 - stable alpha, portfolio target, risk cut, execution intent, order, fill, and reconciliation schemas;

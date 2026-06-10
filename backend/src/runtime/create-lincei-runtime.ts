@@ -2,6 +2,9 @@ import 'reflect-metadata';
 import { DataSource, EntityTarget, Repository } from 'typeorm';
 import { AlphaDecision } from '../entities/alpha-decision.entity';
 import { AlphaOutcomeLabel } from '../entities/alpha-outcome-label.entity';
+import { AgentDecisionRecord } from '../entities/agent-decision-record.entity';
+import { AgentEvaluationRun } from '../entities/agent-evaluation-run.entity';
+import { AgentForecastLabel } from '../entities/agent-forecast-label.entity';
 import { AutonomousRun } from '../entities/autonomous-run.entity';
 import { AutonomousRunSchedule } from '../entities/autonomous-run-schedule.entity';
 import { BrokerFill } from '../entities/broker-fill.entity';
@@ -49,6 +52,9 @@ import { LlmEventFeatureService } from '../modules/v1-pilot/alpha/llm-event-feat
 import { MetaAlphaService } from '../modules/v1-pilot/alpha/meta-alpha.service';
 import { NumericAlphaService } from '../modules/v1-pilot/alpha/numeric-alpha.service';
 import { RawEvidenceArchiveService } from '../modules/v1-pilot/alpha/raw-evidence-archive.service';
+import { ActiveLlmAgentShadowService } from '../modules/v1-pilot/agent/active-llm-agent-shadow.service';
+import { ActiveLlmAgentService } from '../modules/v1-pilot/agent/active-llm-agent.service';
+import { SimulatedBrokerRehearsalService } from '../modules/v1-pilot/broker/simulated-broker-rehearsal.service';
 import { TossWriteBrokerAdapter } from '../modules/v1-pilot/broker/toss-write-broker.adapter';
 import { LeanCliRunner } from '../modules/v1-pilot/lean/lean-cli.runner';
 import { LeanCloudManualImporter } from '../modules/v1-pilot/lean/lean-cloud-manual-importer';
@@ -64,6 +70,7 @@ import { LiveShadowService } from '../modules/v1-pilot/live/live-shadow.service'
 import { MlBaselineInferenceService } from '../modules/v1-pilot/ml/ml-baseline-inference.service';
 import { MlModelRegistryService } from '../modules/v1-pilot/ml/ml-model-registry.service';
 import { MlPythonRunner } from '../modules/v1-pilot/ml/ml-python.runner';
+import { ActiveLlmPaperBridgeService } from '../modules/v1-pilot/paper/active-llm-paper-bridge.service';
 import { LeanPaperBridgeService } from '../modules/v1-pilot/paper/lean-paper-bridge.service';
 import { CapitalEvidenceSliceService } from '../modules/v1-pilot/research/capital-evidence-slice.service';
 import { ResearchFactoryService } from '../modules/v1-pilot/research/research-factory.service';
@@ -90,6 +97,10 @@ export interface LinceiRuntime {
   orchestrator: V1PilotOrchestratorService;
   statusService: V1PilotStatusService;
   capitalEvidenceSliceService: CapitalEvidenceSliceService;
+  activeLlmAgentService: ActiveLlmAgentService;
+  activeLlmAgentShadowService: ActiveLlmAgentShadowService;
+  activeLlmPaperBridgeService: ActiveLlmPaperBridgeService;
+  simulatedBrokerRehearsalService: SimulatedBrokerRehearsalService;
   close(): Promise<void>;
 }
 
@@ -175,6 +186,31 @@ export async function createLinceiRuntime(
     repo(AlphaDecision),
     repo(PortfolioTargetSnapshot),
   );
+  const activeLlmAgentService = new ActiveLlmAgentService(
+    repo(AgentDecisionRecord),
+    repo(AgentEvaluationRun),
+    repo(AgentForecastLabel),
+    repo(LiveShadowRecord),
+    repo(MarketDataBar),
+    featureSnapshotService,
+  );
+  const activeLlmAgentShadowService = new ActiveLlmAgentShadowService(
+    repo(AgentDecisionRecord),
+    repo(AgentEvaluationRun),
+    repo(LiveShadowRecord),
+    riskGateService,
+  );
+  const activeLlmPaperBridgeService = new ActiveLlmPaperBridgeService(
+    controlPlaneService,
+    activeLlmAgentShadowService,
+    repo(AgentDecisionRecord),
+    repo(AgentEvaluationRun),
+    repo(PaperOrderPlan),
+  );
+  const simulatedBrokerRehearsalService = new SimulatedBrokerRehearsalService(
+    controlPlaneService,
+    repo(PaperOrderPlan),
+  );
   const leanLocalSimulatorService = new LeanLocalSimulatorService();
   const leanCliRunner = new LeanCliRunner();
   const leanRunImportService = new LeanRunImportService(
@@ -215,6 +251,10 @@ export async function createLinceiRuntime(
     repo(MarketDataBar),
     repo(LiveShadowRecord),
     repo(PromotionDecision),
+    repo(AgentEvaluationRun),
+    repo(AgentDecisionRecord),
+    repo(AgentForecastLabel),
+    repo(PaperOrderPlan),
     researchFactoryService,
   );
   const liveShadowService = new LiveShadowService(
@@ -248,6 +288,7 @@ export async function createLinceiRuntime(
     leanLocalSimulatorService,
     leanRunImportService,
     leanPaperBridgeService,
+    activeLlmPaperBridgeService,
     learningLoopService,
     liveShadowService,
     livePreflightService,
@@ -272,6 +313,11 @@ export async function createLinceiRuntime(
     repo(BrokerOrderStatusRecord),
     repo(ExecutionIntent),
     repo(LivePilotStatusRecord),
+    repo(AgentEvaluationRun),
+    repo(AgentDecisionRecord),
+    repo(AgentForecastLabel),
+    repo(LiveShadowRecord),
+    repo(PromotionDecision),
     mlModelRegistryService,
     researchFactoryService,
   );
@@ -280,6 +326,9 @@ export async function createLinceiRuntime(
     researchFactoryService,
     repo(ResearchJobRecord),
     repo(AlphaDecision),
+    activeLlmAgentService,
+    activeLlmAgentShadowService,
+    activeLlmPaperBridgeService,
   );
 
   return {
@@ -291,6 +340,10 @@ export async function createLinceiRuntime(
     orchestrator,
     statusService,
     capitalEvidenceSliceService,
+    activeLlmAgentService,
+    activeLlmAgentShadowService,
+    activeLlmPaperBridgeService,
+    simulatedBrokerRehearsalService,
     async close(): Promise<void> {
       if (dataSource.isInitialized) {
         await dataSource.destroy();

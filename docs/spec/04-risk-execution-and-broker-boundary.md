@@ -57,6 +57,8 @@ Paper:
 - orders mutate paper ledgers or QuantConnect paper trading only;
 - evidence proves alpha-to-order plumbing and behavior under market data;
 - paper fills are not proof of real broker readiness.
+- a simulated broker adapter may replay paper state into broker-like snapshots,
+  order statuses, and fill reports for contract and reconciliation checks only.
 
 Live-shadow:
 
@@ -80,6 +82,14 @@ Darwinex/Zero:
 
 Provider-neutral broker interfaces may exist for read-only and pre-trade risk check work, but write methods must remain blocked unless an approved broker-write implementation spec exists.
 
+Provider adapters must not become the domain model. Toss Securities can be the
+first concrete broker adapter, but Toss-specific endpoint names, account
+headers, OAuth token handling, rate-limit behavior, and response envelopes must
+stay inside the adapter. The persisted broker snapshot, order status, fill,
+reconciliation, pre-trade risk check, and promotion ledgers remain
+provider-neutral so another broker can replace Toss without rewriting the alpha,
+paper trading/shadow trading, risk, or learning loop.
+
 Forbidden without spec approval:
 
 - submit;
@@ -98,6 +108,12 @@ Allowed now:
 - verify schema support;
 - produce blocked pre-trade risk check status;
 - reconcile paper trading/shadow trading evidence.
+- replay reconciled paper state through a simulated broker adapter to validate
+  provider-neutral broker schemas and reconciliation behavior.
+
+The simulated broker adapter is not broker-read-only proof. It must not be
+reported as provider account truth, broker-write readiness, or promotion
+approval.
 
 ## Darwinex Boundary
 

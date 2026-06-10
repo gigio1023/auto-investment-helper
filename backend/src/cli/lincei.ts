@@ -128,6 +128,13 @@ async function dispatchCommand(
           runtime.brokerAdapterReadinessService.getStatus(),
         ),
       };
+    case 'broker list-accounts':
+      return runBlockedAware(
+        () => runtime.tossReadOnlyBrokerService.listReadOnlyAccounts('cli'),
+        {
+          fallbackBlocker: 'Broker read-only account discovery is blocked.',
+        },
+      );
     case 'broker poll-read-only':
       return runBlockedAware(
         () => runtime.tossReadOnlyBrokerService.pollReadOnlySnapshot('cli'),
@@ -142,6 +149,16 @@ async function dispatchCommand(
           fallbackBlocker: 'Broker read-only fill polling is blocked.',
         },
       );
+    case 'broker simulate-paper-plan':
+      return {
+        result: await runtime.simulatedBrokerRehearsalService.run({
+          paperOrderPlanId: strictNumericArgValue(
+            rest,
+            '--paper-order-plan-id',
+          ),
+          tolerance: strictNumericArgValue(rest, '--tolerance'),
+        }),
+      };
     case 'broker import-snapshot':
       return {
         result: await runtime.controlPlaneService.importBrokerSnapshot(
@@ -249,6 +266,38 @@ async function dispatchCommand(
           ingestUniverseBars: !rest.includes('--skip-market-data-ingest'),
         }),
       };
+    case 'agent decide':
+      return {
+        result: await runtime.activeLlmAgentService.runDecisionCycle({
+          mode: agentEvaluationMode(argValue(rest, '--mode')),
+          strategyVariant: argValue(rest, '--strategy-variant'),
+          horizonHours: numericArgValue(rest, '--horizon-hours'),
+          symbols: csvArgValue(rest, '--symbols'),
+        }),
+      };
+    case 'agent score':
+      return {
+        result: await runtime.activeLlmAgentService.scoreForecasts({
+          runId: argValue(rest, '--run-id'),
+          strategyVariant: argValue(rest, '--strategy-variant'),
+        }),
+      };
+    case 'agent shadow':
+      return {
+        result: await runtime.activeLlmAgentShadowService.runShadowArena({
+          runId: argValue(rest, '--run-id'),
+          maxActions: numericArgValue(rest, '--max-actions'),
+        }),
+      };
+    case 'agent paper':
+      return {
+        result: await runtime.activeLlmPaperBridgeService.runPaperCycle({
+          runId: argValue(rest, '--run-id'),
+          maxActions: numericArgValue(rest, '--max-actions'),
+        }),
+      };
+    case 'agent status':
+      return { result: await runtime.activeLlmAgentService.getStatus() };
     case 'alpha run':
     case 'run-alpha-cycle':
       return runBlockedAware(() => runtime.orchestrator.runAlphaCycle(), {
@@ -621,6 +670,13 @@ function exitCodeFromResult(result: unknown): number {
   if (candidate.status === 'blocked') {
     return 2;
   }
+  if (
+    candidate.run &&
+    typeof candidate.run === 'object' &&
+    (candidate.run as Record<string, unknown>).status === 'blocked'
+  ) {
+    return 2;
+  }
   if (candidate.status === 'failed' || candidate.status === 'rejected') {
     return 1;
   }
@@ -746,6 +802,11 @@ Core commands:
   research selected-run-bias          Check retained variant evidence
   data semantic-evidence              Ingest Hugging Face FOMC text evidence
   data prepare-lean                   Prepare point-in-time bars for LEAN
+  agent decide                        Record active LLM agent decisions
+  agent score                         Score active LLM agent forecasts
+  agent shadow                        Risk-gate active LLM decisions into shadow evidence
+  agent paper                         Route active LLM decisions through paper order-plan and reconciliation ledgers
+  agent status                        Show active LLM agent evaluation state
   alpha run                           Build numeric, LLM-derived, and combined alpha
   lean full-backtest                  Run local LEAN evidence path
   lean import <latest|run-id>          Import LEAN artifacts
@@ -757,13 +818,32 @@ Core commands:
   learning run                        Label outcomes and record promotion decision
   preflight run                       Run broker-write pre-trade risk check
   broker status                       Show broker adapter and read-only polling status
+  broker list-accounts                Discover Toss accountSeq without broker writes
+  broker simulate-paper-plan          Rehearse latest or selected paper plan as simulated broker evidence
   broker poll-read-only               Poll read-only account and holdings snapshot
-  broker poll-fills                   Poll read-only fills when enabled
+  broker poll-fills                   Poll read-only open orders and partial fills when enabled
   broker import-snapshot --file FILE   Import manual read-only account snapshot
   broker import-fills --file FILE      Import manual read-only fill records
   broker reconcile-snapshot           Reconcile latest or --snapshot-id against paper state
 
 Legacy script command names remain accepted during migration.`;
+}
+
+function agentEvaluationMode(
+  value: string | undefined,
+): 'prospective-paper-arena' | 'historical-episode-replay' | undefined {
+  if (!value) {
+    return undefined;
+  }
+  if (
+    value === 'prospective-paper-arena' ||
+    value === 'historical-episode-replay'
+  ) {
+    return value;
+  }
+  throw new Error(
+    `Invalid --mode ${value}; expected prospective-paper-arena or historical-episode-replay.`,
+  );
 }
 
 if (require.main === module) {

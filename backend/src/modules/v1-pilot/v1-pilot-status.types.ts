@@ -87,6 +87,25 @@ export interface V1PilotSystemStatus {
     replayReconciliationStatus?: string;
     replayFillCount?: number;
   };
+  activeAgent: {
+    runId?: string;
+    runStatus: string;
+    strategyVariant?: string;
+    decisionCount: number;
+    proposedDecisionCount: number;
+    blockedDecisionCount: number;
+    abstainedDecisionCount: number;
+    labeledForecastCount: number;
+    latestShadowId?: string;
+    latestShadowStatus?: string;
+    wouldHaveTradedCount: number;
+    paperPlanId?: number | string;
+    paperPlanStatus?: string;
+    paperReconciliationStatus?: string;
+    promotionDecisionId?: string;
+    promotionStatus?: string;
+    promotionBlockerCount: number;
+  };
   broker: {
     snapshotId?: number | string;
     provider?: string;

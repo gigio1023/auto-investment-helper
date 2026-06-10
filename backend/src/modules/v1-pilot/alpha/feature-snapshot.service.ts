@@ -10,7 +10,10 @@ import type { FeatureSnapshotContract } from '../contracts/v1-pilot.contracts';
 import { validateFeatureSnapshot } from '../contracts/v1-pilot.validators';
 import { hashObject } from '../../../shared/hash.util';
 import { MarketDataBar } from '../../../entities/market-data-bar.entity';
-import { activeUniverseSymbols } from '../universe/universe-manifest';
+import {
+  activeUniverseSymbols,
+  resolveUniverseSelection,
+} from '../universe/universe-manifest';
 
 @Injectable()
 export class FeatureSnapshotService {
@@ -23,7 +26,11 @@ export class FeatureSnapshotService {
 
   async buildSnapshotsForUniverse(
     datasetId = 'v1-lean-universe',
-    options?: { allowSynthetic?: boolean },
+    options?: {
+      allowSynthetic?: boolean;
+      symbols?: string[];
+      maxBarAgeHours?: number;
+    },
   ): Promise<FeatureSnapshotContract[]> {
     const allowSynthetic =
       options?.allowSynthetic === true ||
@@ -31,7 +38,12 @@ export class FeatureSnapshotService {
     const asOf = new Date().toISOString();
     const snapshots: FeatureSnapshotContract[] = [];
 
-    for (const symbol of activeUniverseSymbols()) {
+    const symbols = options?.symbols?.length
+      ? resolveUniverseSelection({ overrideSymbols: options.symbols })
+          .activeSymbols
+      : activeUniverseSymbols();
+
+    for (const symbol of symbols) {
       const bars = await this.marketDataRepository.find({
         where: { datasetId, symbol },
         order: { timestamp: 'DESC' },
@@ -41,6 +53,16 @@ export class FeatureSnapshotService {
         throw new BadRequestException(
           `Insufficient market data for ${symbol}: need at least 2 daily bars in dataset "${datasetId}" (found ${bars.length}). Ingest bars or set ALLOW_SYNTHETIC_FEATURES=true for simulator/tests only.`,
         );
+      }
+      const latestBar = bars[0];
+      if (latestBar && options?.maxBarAgeHours) {
+        const latestTimestamp = new Date(latestBar.timestamp).getTime();
+        const maxAgeMs = options.maxBarAgeHours * 3_600_000;
+        if (Date.now() - latestTimestamp > maxAgeMs) {
+          throw new BadRequestException(
+            `Stale market data for ${symbol}: latest bar ${latestBar.timestamp} exceeds ${options.maxBarAgeHours}h max age for prospective decisions.`,
+          );
+        }
       }
       const features = this.computeFeatures(bars, allowSynthetic);
       const snapshot: FeatureSnapshotContract = {

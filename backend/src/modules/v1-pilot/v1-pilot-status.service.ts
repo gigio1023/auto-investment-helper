@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { AlphaDecision } from '../../entities/alpha-decision.entity';
+import { AgentDecisionRecord } from '../../entities/agent-decision-record.entity';
+import { AgentEvaluationRun } from '../../entities/agent-evaluation-run.entity';
+import { AgentForecastLabel } from '../../entities/agent-forecast-label.entity';
 import { BrokerFill } from '../../entities/broker-fill.entity';
 import { BrokerOrderStatusRecord } from '../../entities/broker-order-status.entity';
 import { BrokerSnapshot } from '../../entities/broker-snapshot.entity';
@@ -10,8 +13,10 @@ import { FeatureSnapshot } from '../../entities/feature-snapshot.entity';
 import { InvestmentProposal } from '../../entities/investment-proposal.entity';
 import { LeanRun } from '../../entities/lean-run.entity';
 import { LivePilotStatusRecord } from '../../entities/live-pilot-status.entity';
+import { LiveShadowRecord } from '../../entities/live-shadow-record.entity';
 import { PaperOrderPlan } from '../../entities/paper-order-plan.entity';
 import { PortfolioTargetSnapshot } from '../../entities/portfolio-target-snapshot.entity';
+import { PromotionDecision } from '../../entities/promotion-decision.entity';
 import { MAX_LIVE_PILOT_NOTIONAL_USD } from './contracts/v1-pilot.contracts';
 import type { LivePilotPreflightContract } from './contracts/v1-pilot.contracts';
 import { MlModelRegistryService } from './ml/ml-model-registry.service';
@@ -48,6 +53,16 @@ export class V1PilotStatusService {
     private readonly executionIntentRepository: Repository<ExecutionIntent>,
     @InjectRepository(LivePilotStatusRecord)
     private readonly livePilotStatusRepository: Repository<LivePilotStatusRecord>,
+    @InjectRepository(AgentEvaluationRun)
+    private readonly agentRunRepository: Repository<AgentEvaluationRun>,
+    @InjectRepository(AgentDecisionRecord)
+    private readonly agentDecisionRepository: Repository<AgentDecisionRecord>,
+    @InjectRepository(AgentForecastLabel)
+    private readonly agentLabelRepository: Repository<AgentForecastLabel>,
+    @InjectRepository(LiveShadowRecord)
+    private readonly liveShadowRepository: Repository<LiveShadowRecord>,
+    @InjectRepository(PromotionDecision)
+    private readonly promotionDecisionRepository: Repository<PromotionDecision>,
     private readonly mlModelRegistryService: MlModelRegistryService,
     private readonly researchFactoryService: ResearchFactoryService,
   ) {}
@@ -65,6 +80,7 @@ export class V1PilotStatusService {
       latestBrokerFill,
       latestIntent,
       latestStatusRecord,
+      latestAgentRun,
       openOrderCount,
       research,
     ] = await Promise.all([
@@ -104,6 +120,10 @@ export class V1PilotStatusService {
       this.livePilotStatusRepository.findOne({
         where: {},
         order: { checkedAt: 'DESC' },
+      }),
+      this.agentRunRepository.findOne({
+        where: {},
+        order: { startedAt: 'DESC' },
       }),
       this.brokerOrderStatusRepository.count({
         where: [
@@ -153,6 +173,7 @@ export class V1PilotStatusService {
       where: {},
       order: { asOf: 'DESC' },
     });
+    const activeAgent = await this.buildActiveAgentStatus(latestAgentRun);
     const mlReadiness = this.mlModelRegistryService.getModelReadiness();
     const preflight =
       latestStatusRecord?.preflight ?? this.notRunPreflight(checkedAt);
@@ -209,6 +230,7 @@ export class V1PilotStatusService {
       latestCloudRun,
       portfolioTarget,
       paper,
+      activeAgent,
       broker,
       preflight,
       livePilot,
@@ -244,6 +266,7 @@ export class V1PilotStatusService {
       research,
       portfolioTarget,
       paper,
+      activeAgent,
       broker,
       livePilot,
       preflight,
@@ -263,6 +286,101 @@ export class V1PilotStatusService {
       this.alphaRepository.countBy({ source: 'meta' }),
     ]);
     return { numeric, llm, meta };
+  }
+
+  private async buildActiveAgentStatus(
+    latestAgentRun: AgentEvaluationRun | null,
+  ): Promise<V1PilotSystemStatus['activeAgent']> {
+    if (!latestAgentRun) {
+      return {
+        runStatus: 'missing',
+        decisionCount: 0,
+        proposedDecisionCount: 0,
+        blockedDecisionCount: 0,
+        abstainedDecisionCount: 0,
+        labeledForecastCount: 0,
+        wouldHaveTradedCount: 0,
+        promotionBlockerCount: 0,
+      };
+    }
+    const [decisions, labeledForecastCount, shadow, paperPlan, promotion] =
+      await Promise.all([
+        this.agentDecisionRepository.find({
+          where: { runId: latestAgentRun.runId },
+        }),
+        this.agentLabelRepository.count({
+          where: { runId: latestAgentRun.runId, status: 'labeled' },
+        }),
+        this.findLatestActiveAgentShadowRecord(latestAgentRun.runId),
+        this.findLatestActiveAgentPaperPlan(latestAgentRun.runId),
+        this.findLatestActiveAgentPromotionDecision(latestAgentRun.runId),
+      ]);
+
+    return {
+      runId: latestAgentRun.runId,
+      runStatus: latestAgentRun.status,
+      strategyVariant: latestAgentRun.strategyVariant,
+      decisionCount: decisions.length,
+      proposedDecisionCount: decisions.filter(
+        (decision) => decision.status === 'proposed',
+      ).length,
+      blockedDecisionCount: decisions.filter(
+        (decision) => decision.status === 'blocked',
+      ).length,
+      abstainedDecisionCount: decisions.filter(
+        (decision) => decision.status === 'abstained',
+      ).length,
+      labeledForecastCount,
+      latestShadowId: shadow?.id,
+      latestShadowStatus: shadow?.status,
+      wouldHaveTradedCount: Array.isArray(shadow?.wouldHaveTraded)
+        ? shadow.wouldHaveTraded.length
+        : 0,
+      paperPlanId: paperPlan?.id,
+      paperPlanStatus: paperPlan?.status,
+      paperReconciliationStatus: paperPlan?.reconciliation?.status,
+      promotionDecisionId: promotion?.id,
+      promotionStatus: promotion?.status,
+      promotionBlockerCount: promotion?.blockerReasons.length ?? 0,
+    };
+  }
+
+  private async findLatestActiveAgentShadowRecord(
+    runId: string,
+  ): Promise<LiveShadowRecord | undefined> {
+    const candidates = await this.liveShadowRepository.find({
+      order: { createdAt: 'DESC' },
+      take: 50,
+    });
+    return candidates.find(
+      (record) =>
+        record.evidenceRefs.includes(`agent-run:${runId}`) &&
+        record.evidenceRefs.includes('evidence-mode:active-llm-agent-shadow'),
+    );
+  }
+
+  private async findLatestActiveAgentPaperPlan(
+    runId: string,
+  ): Promise<PaperOrderPlan | undefined> {
+    const plans = await this.paperPlanRepository.find({
+      order: { updatedAt: 'DESC' },
+      take: 50,
+    });
+    return plans.find((plan) =>
+      plan.idempotencyKey.startsWith(`active-agent-paper:${runId}:`),
+    );
+  }
+
+  private async findLatestActiveAgentPromotionDecision(
+    runId: string,
+  ): Promise<PromotionDecision | undefined> {
+    const decisions = await this.promotionDecisionRepository.find({
+      order: { decidedAt: 'DESC' },
+      take: 50,
+    });
+    return decisions.find((decision) =>
+      decision.targetRef.endsWith(`:${runId}`),
+    );
   }
 
   private async findPaperPlanForEvidence(

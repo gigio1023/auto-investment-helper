@@ -9,12 +9,16 @@ The active long-term direction is an self-funded-capital-first monetization syst
 1. Self-funded capital allocation after the alpha, risk, execution, pre-trade risk checks, and reconciliation gates pass.
 2. Darwinex/Zero external-capital fee path only after the self-funded capital deployment-grade strategy has a compatible signal, instrument mapping, and observed track record.
 
-The active implementation milestone is still a QuantConnect Cloud and LEAN validation system for aggressive alpha research. It is not an automatic production/live-trading system.
+The active implementation milestone is still not an automatic
+production/live-trading system. For numeric and classical ML strategies,
+QuantConnect Cloud and LEAN remain validation foundations. For active LLM agent
+strategies, the main evidence must be prospective paper/shadow evaluation,
+forecast scoring, and reconciliation.
 
 The system should aggressively search for capital-growth opportunities, but only inside an evidence pipeline:
 
 ```text
-research -> typed alpha -> LEAN validation -> paper trading/shadow trading evidence -> reconciliation -> review
+research -> typed alpha or active agent decision -> prospective paper/shadow evaluation -> forecast scoring -> reconciliation -> review
 ```
 
 Real broker writes are blocked by default. Any code path that could submit, cancel, flatten, or otherwise mutate a real brokerage account needs a separate user-approved broker-write implementation spec before implementation.
@@ -33,11 +37,16 @@ Those are different risk levels. The current spec keeps live-money and Darwinex 
 
 ## Scope In
 
-- QuantConnect Cloud and LEAN as the strategy validation runtime.
+- QuantConnect Cloud and LEAN as the strategy validation runtime for
+  backtestable baselines, custom-data replay, and historical episode replay.
 - Local LEAN for debugging, custom-data checks, deterministic replay, and smoke tests.
 - LLM-derived features from news, filings, macro, and portfolio context.
+- Active LLM agent decisions that contain forecasts, theses, counter-theses,
+  invalidation conditions, risk notes, and action plans for prospective
+  evaluation.
 - Typed feature, alpha, insight, portfolio target, risk cut, execution intent, fill, and reconciliation contracts.
 - Paper execution and shadow trading artifacts where no real broker mutation occurs.
+- Forecast labels and proper scoring rules for active LLM agent decisions.
 - Result import into the control plane.
 - Narrow unit tests plus direct runnable verification.
 - Oracle Cloud ARM as an always-on control plane for scheduled ingestion, alpha generation, shadow trading, imports, reconciliation, and alerts.
@@ -55,6 +64,8 @@ Those are different risk levels. The current spec keeps live-money and Darwinex 
 - treating simulator or local sample-data runs as promotion evidence;
 - multiple-testing bias from only storing winning parallel backtests;
 - using LLM free text as an order instruction;
+- treating an LLM action plan as a final portfolio target or broker payload;
+- promoting an active LLM agent from historical backtest results alone;
 - storing credentials in prompts, frontend state, logs, or research artifacts;
 - Darwinex/Zero performance-fee claims without a compatible account, mapped instruments, observed track record, and allocated-capital profit under Darwinex rules.
 
@@ -71,6 +82,7 @@ Explicit user approval is required before changing any of these:
 - QuantConnect Cloud promotion requirements;
 - paper trading/shadow trading requirements;
 - LLM permissions around execution or sizing;
+- active LLM agent promotion gates;
 - testing and verification policy;
 - credential and broker-boundary rules.
 

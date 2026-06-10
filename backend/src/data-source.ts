@@ -2,6 +2,9 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { AutonomousRun } from './entities/autonomous-run.entity';
 import { AutonomousRunSchedule } from './entities/autonomous-run-schedule.entity';
+import { AgentDecisionRecord } from './entities/agent-decision-record.entity';
+import { AgentEvaluationRun } from './entities/agent-evaluation-run.entity';
+import { AgentForecastLabel } from './entities/agent-forecast-label.entity';
 import { BrokerFill } from './entities/broker-fill.entity';
 import { BrokerOrderCommand } from './entities/broker-order-command.entity';
 import { BrokerOrderStatusRecord } from './entities/broker-order-status.entity';
@@ -44,6 +47,8 @@ import { ResearchJobRecord } from './entities/research-job-record.entity';
 import { AddSpecEvidenceTables1764288000000 } from './migrations/1764288000000-AddSpecEvidenceTables';
 import { AddLiveShadowEvidenceMode1764374400000 } from './migrations/1764374400000-AddLiveShadowEvidenceMode';
 import { AddResearchFactoryTables1764460800000 } from './migrations/1764460800000-AddResearchFactoryTables';
+import { AddMarketDataTables1764504000000 } from './migrations/1764504000000-AddMarketDataTables';
+import { AddAgentEvaluationTables1764547200000 } from './migrations/1764547200000-AddAgentEvaluationTables';
 import { loadRepoEnv } from './shared/repo-env.loader';
 
 loadRepoEnv();
@@ -67,6 +72,9 @@ export const databaseEntities = [
   RiskEvaluation,
   AutonomousRun,
   AutonomousRunSchedule,
+  AgentDecisionRecord,
+  AgentEvaluationRun,
+  AgentForecastLabel,
   ResearchRun,
   PaperAccount,
   PaperOrderPlan,
@@ -96,6 +104,8 @@ export const databaseMigrations = [
   AddSpecEvidenceTables1764288000000,
   AddLiveShadowEvidenceMode1764374400000,
   AddResearchFactoryTables1764460800000,
+  AddMarketDataTables1764504000000,
+  AddAgentEvaluationTables1764547200000,
 ];
 
 const AppDataSource = new DataSource({

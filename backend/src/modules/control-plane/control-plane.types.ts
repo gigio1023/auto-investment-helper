@@ -423,6 +423,8 @@ export interface BrokerAdapterReadOnlyPollStatus {
   lastFillPollAt?: string;
   lastBrokerFillIds?: number[];
   lastFillCount?: number;
+  lastBrokerOrderStatusIds?: number[];
+  lastOrderStatusCount?: number;
   lastReconciliationStatus?: string;
   lastReconciledAt?: string;
   lastReconciliationError?: string;
@@ -437,6 +439,7 @@ export interface BrokerReadOnlyPollResponse {
   status: BrokerAdapterReadOnlyPollStatus;
   snapshot?: BrokerSnapshot;
   fills?: BrokerFill[];
+  orderStatuses?: BrokerOrderStatusRecord[];
 }
 
 export interface UpdateExecutionControlRequest {

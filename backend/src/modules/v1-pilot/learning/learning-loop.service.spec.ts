@@ -14,6 +14,10 @@ describe('LearningLoopService', () => {
       {} as never,
       { find: jest.fn(async () => []) } as never,
       promotionRepository as never,
+      { findOne: jest.fn(async () => null) } as never,
+      { find: jest.fn(async () => []) } as never,
+      { find: jest.fn(async () => []) } as never,
+      { find: jest.fn(async () => []) } as never,
       {
         checkSelectedRunBias: jest.fn(async () => ({
           status: 'blocked',
@@ -46,6 +50,10 @@ describe('LearningLoopService', () => {
       {} as never,
       {} as never,
       labelRepository as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
       {} as never,
       {} as never,
       {} as never,
@@ -88,6 +96,65 @@ describe('LearningLoopService', () => {
         alphaDecisionId: 'alpha-1',
         labelAt: '2026-01-04T00:00:00.000Z',
       }),
+    );
+  });
+
+  it('does not let active-agent shadow evidence satisfy LEAN promotion', async () => {
+    const promotionRepository = {
+      create: jest.fn((value) => value),
+      save: jest.fn(async (value) => value),
+    };
+    const service = new LearningLoopService(
+      {
+        getLatestStrategyRun: jest.fn(async () => ({
+          runId: 'lean-run-1',
+          projectName: 'aggressive_llm_momentum',
+          runtime: 'quantconnect-cloud',
+          status: 'passed',
+          promotionEligible: true,
+        })),
+      } as never,
+      {} as never,
+      { count: jest.fn(async () => 1) } as never,
+      {} as never,
+      {
+        find: jest.fn(async () => [
+          {
+            id: 'agent-shadow-1',
+            status: 'recorded',
+            evidenceMode: 'current_live_shadow',
+            evidenceRefs: [
+              'evidence-mode:active-llm-agent-shadow',
+              'agent-run:agent-run-1',
+            ],
+          },
+        ]),
+      } as never,
+      promotionRepository as never,
+      { findOne: jest.fn(async () => null) } as never,
+      { find: jest.fn(async () => []) } as never,
+      { find: jest.fn(async () => []) } as never,
+      { find: jest.fn(async () => []) } as never,
+      {
+        checkSelectedRunBias: jest.fn(async () => ({
+          status: 'passed',
+          checkedAt: '2026-05-27T00:00:00.000Z',
+          targetRef: 'strategy:aggressive_llm_momentum:lean-run-1',
+          attemptedVariantCount: 3,
+          passedVariantCount: 3,
+          failedOrBlockedVariantCount: 0,
+          minVariantCount: 3,
+          jobRefs: ['research-job:promotion-check'],
+          blockers: [],
+        })),
+      } as never,
+    );
+
+    const decision = await service.recordStrategyPromotionDecision();
+
+    expect(decision.status).toBe('blocked');
+    expect(decision.blockerReasons).toContain(
+      'No shadow trading record exists.',
     );
   });
 });

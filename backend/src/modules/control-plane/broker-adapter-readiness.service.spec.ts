@@ -67,7 +67,7 @@ describe('BrokerAdapterReadinessService', () => {
           dryRunOnly: true,
           blockers: expect.arrayContaining([
             'Broker write access is disabled.',
-            'Broker open-order polling is not implemented.',
+            'Broker emergency open-order custody is not implemented.',
             'Broker cancel/replace endpoint is not implemented.',
             'Broker flatten-position order path is not implemented.',
           ]),
@@ -171,7 +171,7 @@ describe('BrokerAdapterReadinessService', () => {
     );
   });
 
-  it('marks read-only fill polling configured only after schema and path are verified', () => {
+  it('marks read-only fill polling configured after schema verification', () => {
     process.env.BROKER_READ_ONLY_ENABLED = 'true';
     process.env.TOSS_READ_ONLY_POLLER_ENABLED = 'true';
     process.env.TOSS_READ_ONLY_FILL_POLLER_ENABLED = 'true';
@@ -180,7 +180,6 @@ describe('BrokerAdapterReadinessService', () => {
     process.env.TOSS_OPEN_API_ACCOUNT_SEQ = 'acct-123456789';
     process.env.TOSS_OPEN_API_SCHEMA_VERIFIED = 'true';
     process.env.TOSS_OPEN_API_FILL_SCHEMA_VERIFIED = 'true';
-    process.env.TOSS_OPEN_API_FILLS_PATH = '/v1/fills';
 
     const service = new BrokerAdapterReadinessService();
 
@@ -194,7 +193,12 @@ describe('BrokerAdapterReadinessService', () => {
         fillSchemaVerified: true,
         fillPathConfigured: true,
         canPollFills: true,
-        allowedEndpoints: expect.arrayContaining(['GET /v1/fills']),
+        allowedEndpoints: expect.arrayContaining([
+          'GET /api/v1/orders',
+          'GET /api/v1/holdings',
+          'GET /api/v1/buying-power',
+          'GET /api/v1/exchange-rate',
+        ]),
       }),
     );
     expect(status.capabilities).toEqual(

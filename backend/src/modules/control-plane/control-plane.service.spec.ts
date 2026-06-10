@@ -2043,7 +2043,7 @@ describe('ControlPlaneService', () => {
     expect(emergency.blockedReasons).toEqual(
       expect.arrayContaining([
         'Broker cancel/replace endpoint is not implemented',
-        'Broker open-order polling is not implemented',
+        'Broker emergency open-order custody is not implemented',
       ]),
     );
     expect(await service.listBrokerOrderCommands()).toHaveLength(2);

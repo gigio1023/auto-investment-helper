@@ -14,8 +14,7 @@ import {
   UniverseSelectionReport,
 } from './universe-manifest.types';
 
-const DEFAULT_MANIFEST_RELATIVE_PATH =
-  'config/universes/quality-gated-v2.json';
+const DEFAULT_MANIFEST_RELATIVE_PATH = 'config/universes/quality-gated-v2.json';
 const LEAN_RUNTIME_MANIFEST_RELATIVE_PATH =
   'engines/lean/aggressive_llm_momentum/input/universe_manifest.runtime.json';
 
@@ -25,7 +24,9 @@ export function resolveUniverseSelection(
   const manifestPath = resolveManifestPath(options.manifestPath);
   const manifest = loadUniverseManifest(manifestPath);
   const profileName =
-    options.profile ?? process.env.V1_UNIVERSE_PROFILE ?? manifest.defaultProfile;
+    options.profile ??
+    process.env.V1_UNIVERSE_PROFILE ??
+    manifest.defaultProfile;
   const envAllowLeveraged =
     process.env.V1_ALLOW_LEVERAGED_ETF === undefined
       ? undefined
@@ -37,14 +38,20 @@ export function resolveUniverseSelection(
     false;
   const profile = resolveProfile(manifest, profileName);
   const instruments = indexInstruments(manifest);
-  const overrideSymbols =
-    options.overrideSymbols ?? parseSymbols(process.env.V1_UNIVERSE_SYMBOLS);
+  const overrideSymbols = options.overrideSymbols
+    ? uniqueSymbols(options.overrideSymbols)
+    : parseSymbols(process.env.V1_UNIVERSE_SYMBOLS);
 
   validateProfile(profile, instruments, allowLeveragedEtf);
 
   const activeSymbols = overrideSymbols.length
-    ? validateOverrideSymbols(manifest, instruments, overrideSymbols, allowLeveragedEtf)
-    : profile.activeSymbols ?? [];
+    ? validateOverrideSymbols(
+        manifest,
+        instruments,
+        overrideSymbols,
+        allowLeveragedEtf,
+      )
+    : (profile.activeSymbols ?? []);
 
   validateActiveSymbols(instruments, activeSymbols, allowLeveragedEtf);
 
@@ -115,7 +122,9 @@ function loadUniverseManifest(manifestPath: string): UniverseManifest {
   if (!existsSync(manifestPath)) {
     throw new Error(`Universe manifest not found: ${manifestPath}`);
   }
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as UniverseManifest;
+  const manifest = JSON.parse(
+    readFileSync(manifestPath, 'utf8'),
+  ) as UniverseManifest;
   if (!manifest.id || !Array.isArray(manifest.instruments)) {
     throw new Error(`Invalid universe manifest: ${manifestPath}`);
   }
@@ -124,7 +133,9 @@ function loadUniverseManifest(manifestPath: string): UniverseManifest {
 
 function resolveManifestPath(explicitPath?: string): string {
   const configured =
-    explicitPath ?? process.env.V1_UNIVERSE_MANIFEST ?? DEFAULT_MANIFEST_RELATIVE_PATH;
+    explicitPath ??
+    process.env.V1_UNIVERSE_MANIFEST ??
+    DEFAULT_MANIFEST_RELATIVE_PATH;
   return isAbsolute(configured) ? configured : join(repoRoot(), configured);
 }
 
@@ -137,7 +148,9 @@ function resolveProfile(
   manifest: UniverseManifest,
   profileName: string,
 ): UniverseProfile {
-  const profile = manifest.profiles.find((candidate) => candidate.name === profileName);
+  const profile = manifest.profiles.find(
+    (candidate) => candidate.name === profileName,
+  );
   if (!profile) {
     throw new Error(`Unknown universe profile: ${profileName}`);
   }
@@ -147,10 +160,23 @@ function resolveProfile(
   const parent = resolveProfile(manifest, profile.extends);
   return normalizeProfile({
     ...profile,
-    activeSymbols: mergeSymbols(parent.activeSymbols, profile.activeSymbols, profile.activeAdd),
-    benchmarkSymbols: mergeSymbols(parent.benchmarkSymbols, profile.benchmarkSymbols),
-    watchlistSymbols: mergeSymbols(parent.watchlistSymbols, profile.watchlistSymbols),
-    minimumStartDate: maxDate(parent.minimumStartDate, profile.minimumStartDate),
+    activeSymbols: mergeSymbols(
+      parent.activeSymbols,
+      profile.activeSymbols,
+      profile.activeAdd,
+    ),
+    benchmarkSymbols: mergeSymbols(
+      parent.benchmarkSymbols,
+      profile.benchmarkSymbols,
+    ),
+    watchlistSymbols: mergeSymbols(
+      parent.watchlistSymbols,
+      profile.watchlistSymbols,
+    ),
+    minimumStartDate: maxDate(
+      parent.minimumStartDate,
+      profile.minimumStartDate,
+    ),
   });
 }
 
@@ -163,7 +189,9 @@ function normalizeProfile(profile: UniverseProfile): UniverseProfile {
   };
 }
 
-function indexInstruments(manifest: UniverseManifest): Map<string, UniverseInstrument> {
+function indexInstruments(
+  manifest: UniverseManifest,
+): Map<string, UniverseInstrument> {
   return new Map(
     manifest.instruments.map((instrument) => [
       instrument.symbol.toUpperCase(),
@@ -182,7 +210,11 @@ function validateProfile(
       `Universe profile ${profile.name} requires V1_ALLOW_LEVERAGED_ETF=true.`,
     );
   }
-  validateActiveSymbols(instruments, profile.activeSymbols ?? [], allowLeveragedEtf);
+  validateActiveSymbols(
+    instruments,
+    profile.activeSymbols ?? [],
+    allowLeveragedEtf,
+  );
 }
 
 function validateActiveSymbols(
@@ -193,7 +225,9 @@ function validateActiveSymbols(
   for (const symbol of symbols) {
     const instrument = instruments.get(symbol);
     if (!instrument) {
-      throw new Error(`Universe symbol ${symbol} is not declared in the manifest.`);
+      throw new Error(
+        `Universe symbol ${symbol} is not declared in the manifest.`,
+      );
     }
     if (instrument.status === 'hard_excluded') {
       throw new Error(
@@ -217,13 +251,19 @@ function validateOverrideSymbols(
   allowLeveragedEtf: boolean,
 ): string[] {
   const allowedStatuses = new Set(
-    manifest.rules?.debugOverrideAllowedStatuses ?? ['active', 'benchmark', 'watchlist'],
+    manifest.rules?.debugOverrideAllowedStatuses ?? [
+      'active',
+      'benchmark',
+      'watchlist',
+    ],
   );
   validateActiveSymbols(instruments, symbols, allowLeveragedEtf);
   for (const symbol of symbols) {
     const instrument = instruments.get(symbol);
     if (!instrument || !allowedStatuses.has(instrument.status)) {
-      throw new Error(`Universe override rejected for ${symbol}: status is not tradable.`);
+      throw new Error(
+        `Universe override rejected for ${symbol}: status is not tradable.`,
+      );
     }
   }
   return symbols;
@@ -234,7 +274,10 @@ function symbolCapsFor(
   symbols: string[],
 ): Record<string, number> {
   return Object.fromEntries(
-    symbols.map((symbol) => [symbol, instruments.get(symbol)?.maxPositionPct ?? 0.08]),
+    symbols.map((symbol) => [
+      symbol,
+      instruments.get(symbol)?.maxPositionPct ?? 0.08,
+    ]),
   );
 }
 
@@ -243,7 +286,10 @@ function sleeveBySymbolFor(
   symbols: string[],
 ): Record<string, string> {
   return Object.fromEntries(
-    symbols.map((symbol) => [symbol, instruments.get(symbol)?.sleeve ?? 'unclassified']),
+    symbols.map((symbol) => [
+      symbol,
+      instruments.get(symbol)?.sleeve ?? 'unclassified',
+    ]),
   );
 }
 
@@ -255,7 +301,11 @@ function parseSymbols(raw: string | undefined): string[] {
 }
 
 function uniqueSymbols(symbols: string[]): string[] {
-  return [...new Set(symbols.map((symbol) => symbol.trim().toUpperCase()).filter(Boolean))];
+  return [
+    ...new Set(
+      symbols.map((symbol) => symbol.trim().toUpperCase()).filter(Boolean),
+    ),
+  ];
 }
 
 function mergeSymbols(

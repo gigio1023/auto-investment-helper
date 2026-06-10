@@ -1,4 +1,7 @@
-import { mapTossReadOnlySnapshot } from './toss-read-only.mapper';
+import {
+  mapTossReadOnlyOrderStatuses,
+  mapTossReadOnlySnapshot,
+} from './toss-read-only.mapper';
 
 describe('mapTossReadOnlySnapshot', () => {
   it('maps a defensive Toss holdings shape into a read-only broker snapshot request', () => {
@@ -52,5 +55,55 @@ describe('mapTossReadOnlySnapshot', () => {
         },
       }),
     ).toThrow('Toss read-only holdings response is missing cash');
+  });
+
+  it('maps Toss open orders into provider-neutral order status records', () => {
+    const mapped = mapTossReadOnlyOrderStatuses({
+      accountRef: 'account-123456',
+      asOf: '2026-06-09T09:30:00.000Z',
+      fills: {
+        result: {
+          orders: [
+            {
+              orderId: 'order-1',
+              symbol: 'AAPL',
+              side: 'SELL',
+              orderType: 'LIMIT',
+              status: 'PARTIAL_FILLED',
+              price: '185.5',
+              quantity: '5',
+              currency: 'USD',
+              orderedAt: '2026-06-09T09:29:00+09:00',
+              execution: {
+                filledQuantity: '2',
+                averageFilledPrice: '185.25',
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    expect(mapped).toEqual([
+      expect.objectContaining({
+        provider: 'toss',
+        sourceRef: 'toss-read-only-order-poll',
+        accountRefHash: expect.stringMatching(/^sha256:/),
+        brokerOrderRefHash: expect.stringMatching(/^sha256:/),
+        externalStatus: 'partially_filled',
+        symbol: 'AAPL',
+        side: 'SELL',
+        orderType: 'LIMIT',
+        requestedQuantity: 5,
+        filledQuantity: 2,
+        remainingQuantity: 3,
+        requestedNotional: 927.5,
+        averageFillPrice: 185.25,
+        limitPrice: 185.5,
+        currency: 'USD',
+        submittedAt: '2026-06-09T09:29:00+09:00',
+        asOf: '2026-06-09T09:30:00.000Z',
+      }),
+    ]);
   });
 });

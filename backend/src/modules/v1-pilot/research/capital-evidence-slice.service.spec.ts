@@ -35,6 +35,9 @@ describe('CapitalEvidenceSliceService', () => {
       {
         find: async () => [],
       } as unknown as Repository<AlphaDecision>,
+      mockActiveAgentService(),
+      mockActiveAgentShadowService(),
+      mockActiveLlmPaperBridgeService(),
     );
 
     const result = await service.run({ maxBacktestWorkers: 1 });
@@ -66,6 +69,9 @@ describe('CapitalEvidenceSliceService', () => {
       {
         find: async () => [],
       } as unknown as Repository<AlphaDecision>,
+      mockActiveAgentService(),
+      mockActiveAgentShadowService(),
+      mockActiveLlmPaperBridgeService(),
     );
 
     const result = await service.run({
@@ -93,6 +99,9 @@ describe('CapitalEvidenceSliceService', () => {
       {
         find: async () => [],
       } as unknown as Repository<AlphaDecision>,
+      mockActiveAgentService(),
+      mockActiveAgentShadowService(),
+      mockActiveLlmPaperBridgeService(),
     );
 
     const result = await service.run({
@@ -177,6 +186,51 @@ function mockOrchestrator(
     })),
     ...overrides,
   } as unknown as V1PilotOrchestratorService;
+}
+
+function mockActiveAgentService() {
+  return {
+    runDecisionCycle: jest.fn(async () => ({
+      run: {
+        runId: 'agent-run-capital',
+        status: 'blocked',
+        strategyVariant: 'active-llm-agent-v1',
+        horizonHours: 24,
+        blockerReasons: ['LLM provider is unavailable.'],
+      },
+      decisions: [],
+    })),
+    scoreForecasts: jest.fn(async () => ({
+      status: 'blocked',
+      labeled: 0,
+      blocked: 0,
+      blockers: ['No proposed active LLM decisions are available.'],
+    })),
+  } as never;
+}
+
+function mockActiveAgentShadowService() {
+  return {
+    runShadowArena: jest.fn(async () => ({
+      status: 'blocked',
+      blockers: ['No proposed active LLM decisions are available.'],
+      record: {
+        id: 'agent-shadow-capital',
+        status: 'blocked',
+        wouldHaveTraded: [],
+      },
+    })),
+  } as never;
+}
+
+function mockActiveLlmPaperBridgeService() {
+  return {
+    runPaperCycle: jest.fn(async () => ({
+      status: 'blocked',
+      blockers: ['No proposed active LLM decisions are available.'],
+      paperPlan: null,
+    })),
+  } as never;
 }
 
 function mockResearchFactory(): ResearchFactoryService {

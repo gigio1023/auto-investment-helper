@@ -13,6 +13,9 @@ import {
 } from '../../../entities/research-job-record.entity';
 import { hashObject } from '../../../shared/hash.util';
 import { V1PilotOrchestratorService } from '../v1-pilot-orchestrator.service';
+import { ActiveLlmAgentShadowService } from '../agent/active-llm-agent-shadow.service';
+import { ActiveLlmAgentService } from '../agent/active-llm-agent.service';
+import { ActiveLlmPaperBridgeService } from '../paper/active-llm-paper-bridge.service';
 import { resolveUniverseSelection } from '../universe/universe-manifest';
 import { ResearchFactoryService } from './research-factory.service';
 
@@ -103,6 +106,7 @@ export interface CapitalEvidenceSliceResult {
     blocked: number;
     flatNoOrder: number;
   };
+  activeAgent: CapitalActiveAgentSummary;
   steps: CapitalEvidenceStep[];
   blockers: string[];
   promotionDecision?: unknown;
@@ -114,6 +118,41 @@ export interface CapitalEvidenceSliceResult {
   researchStatus?: unknown;
 }
 
+export interface CapitalActiveAgentSummary {
+  status: 'passed' | 'blocked' | 'failed' | 'skipped';
+  runId?: string;
+  strategyVariant?: string;
+  horizonHours?: number;
+  decisions: {
+    total: number;
+    proposed: number;
+    abstained: number;
+    blocked: number;
+  };
+  shadow: {
+    status?: string;
+    recordId?: string;
+    riskDecision?: string;
+    wouldHaveTradedCount: number;
+  };
+  paperBridge: {
+    status?: string;
+    proposalId?: number;
+    paperPlanId?: number;
+    paperPlanStatus?: string;
+    reconciliationStatus?: string;
+  };
+  scoring: {
+    status?: string;
+    labeled: number;
+    blocked: number;
+    averageBrierScore?: number;
+    averageLogScore?: number;
+  };
+  evidenceRefs: string[];
+  blockers: string[];
+}
+
 @Injectable()
 export class CapitalEvidenceSliceService {
   constructor(
@@ -123,6 +162,9 @@ export class CapitalEvidenceSliceService {
     private readonly jobRepository: Repository<ResearchJobRecord>,
     @InjectRepository(AlphaDecision)
     private readonly alphaRepository: Repository<AlphaDecision>,
+    private readonly activeLlmAgentService: ActiveLlmAgentService,
+    private readonly activeLlmAgentShadowService: ActiveLlmAgentShadowService,
+    private readonly activeLlmPaperBridgeService: ActiveLlmPaperBridgeService,
   ) {}
 
   async run(
@@ -281,6 +323,80 @@ export class CapitalEvidenceSliceService {
             .promotionDecision
         : undefined;
 
+    const activeAgentDecide = await this.runStep(
+      'active-agent-decide',
+      'Active LLM prospective decision cycle',
+      () =>
+        this.activeLlmAgentService.runDecisionCycle({
+          symbols: universe,
+        }),
+      stepOptions,
+    );
+    steps.push(activeAgentDecide);
+    const activeAgentRunId = this.activeAgentRunId(activeAgentDecide);
+    const activeAgentShadow = activeAgentRunId
+      ? await this.runStep(
+          'active-agent-shadow',
+          'Active LLM risk-gated shadow arena',
+          () =>
+            this.activeLlmAgentShadowService.runShadowArena({
+              runId: activeAgentRunId,
+              maxActions: 3,
+            }),
+          stepOptions,
+        )
+      : this.skippedStep(
+          'active-agent-shadow',
+          'Active LLM risk-gated shadow arena',
+          [
+            'Skipped because active LLM decision cycle did not create a run id.',
+          ],
+        );
+    steps.push(activeAgentShadow);
+    const activeAgentPaper = activeAgentRunId
+      ? await this.runStep(
+          'active-agent-paper-bridge',
+          'Active LLM paper order-plan rehearsal',
+          () =>
+            this.activeLlmPaperBridgeService.runPaperCycle({
+              runId: activeAgentRunId,
+              maxActions: 3,
+            }),
+          stepOptions,
+        )
+      : this.skippedStep(
+          'active-agent-paper-bridge',
+          'Active LLM paper order-plan rehearsal',
+          [
+            'Skipped because active LLM decision cycle did not create a run id.',
+          ],
+        );
+    steps.push(activeAgentPaper);
+    const activeAgentScore = activeAgentRunId
+      ? await this.runStep(
+          'active-agent-score',
+          'Active LLM prospective scoring',
+          () =>
+            this.activeLlmAgentService.scoreForecasts({
+              runId: activeAgentRunId,
+            }),
+          stepOptions,
+        )
+      : this.skippedStep(
+          'active-agent-score',
+          'Active LLM prospective scoring',
+          [
+            'Skipped because active LLM decision cycle did not create a run id.',
+          ],
+        );
+    steps.push(activeAgentScore);
+    const activeAgent = this.activeAgentSummary({
+      decide: activeAgentDecide,
+      shadow: activeAgentShadow,
+      paper: activeAgentPaper,
+      score: activeAgentScore,
+    });
+
     steps.push(
       await this.runStep(
         'broker-write-preflight',
@@ -312,6 +428,7 @@ export class CapitalEvidenceSliceService {
       stepTimeoutMs,
       variants,
       variantSummary,
+      activeAgent,
       steps,
       blockers,
       promotionDecision,
@@ -607,6 +724,25 @@ export class CapitalEvidenceSliceService {
         ? blockers
         : [`Step returned ${String(candidate.status)} status.`];
     }
+    const nestedRun = this.objectRecord(candidate.run);
+    if (nestedRun?.status === 'blocked') {
+      const nestedBlockers = [
+        ...blockers,
+        ...this.stringArray(nestedRun.blockerReasons),
+      ].filter(Boolean);
+      return nestedBlockers.length
+        ? nestedBlockers
+        : ['Nested run returned blocked status.'];
+    }
+    if (
+      nestedRun?.status &&
+      ['failed', 'rejected'].includes(String(nestedRun.status))
+    ) {
+      return [
+        ...blockers,
+        `Nested run returned ${String(nestedRun.status)} status.`,
+      ];
+    }
     if (
       candidate.promotionDecision &&
       typeof candidate.promotionDecision === 'object'
@@ -628,11 +764,19 @@ export class CapitalEvidenceSliceService {
       return [];
     }
     const candidate = output as Record<string, unknown>;
+    const nestedRun = this.objectRecord(candidate.run);
+    const nestedRecord = this.objectRecord(candidate.record);
+    const nestedPaperPlan = this.objectRecord(candidate.paperPlan);
     return [
       ...this.stringArray(candidate.evidenceRefs),
       ...this.stringArray(candidate.jobRefs),
       candidate.runId ? `run:${String(candidate.runId)}` : '',
       candidate.id ? `record:${String(candidate.id)}` : '',
+      nestedRun?.runId ? `agent-run:${String(nestedRun.runId)}` : '',
+      nestedRecord?.id ? `live-shadow:${String(nestedRecord.id)}` : '',
+      nestedPaperPlan?.id
+        ? `paper-order-plan:${String(nestedPaperPlan.id)}`
+        : '',
     ].filter(Boolean);
   }
 
@@ -729,10 +873,141 @@ export class CapitalEvidenceSliceService {
     return preflight?.blockers ?? [];
   }
 
+  private activeAgentRunId(step: CapitalEvidenceStep): string | undefined {
+    const output = this.objectRecord(step.output);
+    const run = this.objectRecord(output?.run);
+    return typeof run?.runId === 'string' ? run.runId : undefined;
+  }
+
+  private activeAgentSummary(input: {
+    decide: CapitalEvidenceStep;
+    shadow: CapitalEvidenceStep;
+    paper: CapitalEvidenceStep;
+    score: CapitalEvidenceStep;
+  }): CapitalActiveAgentSummary {
+    const decideOutput = this.objectRecord(input.decide.output);
+    const run = this.objectRecord(decideOutput?.run);
+    const decisions = Array.isArray(decideOutput?.decisions)
+      ? decideOutput.decisions
+      : [];
+    const shadowOutput = this.objectRecord(input.shadow.output);
+    const shadowRecord = this.objectRecord(shadowOutput?.record);
+    const riskDecision = this.objectRecord(shadowOutput?.riskDecision);
+    const paperOutput = this.objectRecord(input.paper.output);
+    const paperPlan = this.objectRecord(paperOutput?.paperPlan);
+    const reconciliation = this.objectRecord(paperPlan?.reconciliation);
+    const scoreOutput = this.objectRecord(input.score.output);
+    const blockers = [
+      ...input.decide.blockers,
+      ...input.shadow.blockers,
+      ...input.paper.blockers,
+      ...input.score.blockers,
+    ];
+    const failed = [input.decide, input.shadow, input.paper, input.score].some(
+      (step) => step.status === 'failed',
+    );
+    const skipped = [input.decide, input.shadow, input.paper, input.score].some(
+      (step) => step.status === 'skipped',
+    );
+
+    return {
+      status: failed
+        ? 'failed'
+        : blockers.length
+          ? 'blocked'
+          : skipped
+            ? 'skipped'
+            : 'passed',
+      runId: typeof run?.runId === 'string' ? run.runId : undefined,
+      strategyVariant:
+        typeof run?.strategyVariant === 'string'
+          ? run.strategyVariant
+          : undefined,
+      horizonHours:
+        typeof run?.horizonHours === 'number' ? run.horizonHours : undefined,
+      decisions: {
+        total: decisions.length,
+        proposed: decisions.filter(
+          (decision) => this.objectRecord(decision)?.status === 'proposed',
+        ).length,
+        abstained: decisions.filter(
+          (decision) => this.objectRecord(decision)?.status === 'abstained',
+        ).length,
+        blocked: decisions.filter(
+          (decision) => this.objectRecord(decision)?.status === 'blocked',
+        ).length,
+      },
+      shadow: {
+        status:
+          typeof shadowOutput?.status === 'string'
+            ? shadowOutput.status
+            : undefined,
+        recordId:
+          typeof shadowRecord?.id === 'string' ? shadowRecord.id : undefined,
+        riskDecision:
+          typeof riskDecision?.decision === 'string'
+            ? riskDecision.decision
+            : undefined,
+        wouldHaveTradedCount: Array.isArray(shadowRecord?.wouldHaveTraded)
+          ? shadowRecord.wouldHaveTraded.length
+          : 0,
+      },
+      paperBridge: {
+        status:
+          typeof paperOutput?.status === 'string'
+            ? paperOutput.status
+            : undefined,
+        proposalId:
+          typeof paperOutput?.proposalId === 'number'
+            ? paperOutput.proposalId
+            : undefined,
+        paperPlanId:
+          typeof paperPlan?.id === 'number' ? paperPlan.id : undefined,
+        paperPlanStatus:
+          typeof paperPlan?.status === 'string' ? paperPlan.status : undefined,
+        reconciliationStatus:
+          typeof reconciliation?.status === 'string'
+            ? reconciliation.status
+            : undefined,
+      },
+      scoring: {
+        status:
+          typeof scoreOutput?.status === 'string'
+            ? scoreOutput.status
+            : undefined,
+        labeled:
+          typeof scoreOutput?.labeled === 'number' ? scoreOutput.labeled : 0,
+        blocked:
+          typeof scoreOutput?.blocked === 'number' ? scoreOutput.blocked : 0,
+        averageBrierScore:
+          typeof scoreOutput?.averageBrierScore === 'number'
+            ? scoreOutput.averageBrierScore
+            : undefined,
+        averageLogScore:
+          typeof scoreOutput?.averageLogScore === 'number'
+            ? scoreOutput.averageLogScore
+            : undefined,
+      },
+      evidenceRefs: [
+        ...input.decide.evidenceRefs,
+        ...input.shadow.evidenceRefs,
+        ...input.paper.evidenceRefs,
+        ...input.score.evidenceRefs,
+      ],
+      blockers,
+    };
+  }
+
   private stringArray(value: unknown): string[] {
     return Array.isArray(value)
       ? value.filter((entry): entry is string => typeof entry === 'string')
       : [];
+  }
+
+  private objectRecord(value: unknown): Record<string, unknown> | undefined {
+    return value && typeof value === 'object'
+      ? (value as Record<string, unknown>)
+      : undefined;
   }
 
   private errorMessage(error: unknown): string {

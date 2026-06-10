@@ -76,6 +76,16 @@ function statusFixture(stage: {
       status: 'blocked',
       fillCount: 0,
     },
+    activeAgent: {
+      runStatus: 'missing',
+      decisionCount: 0,
+      proposedDecisionCount: 0,
+      blockedDecisionCount: 0,
+      abstainedDecisionCount: 0,
+      labeledForecastCount: 0,
+      wouldHaveTradedCount: 0,
+      promotionBlockerCount: 0,
+    },
     broker: {
       snapshotStatus: 'blocked',
       openOrderCount: 0,

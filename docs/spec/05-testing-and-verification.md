@@ -10,6 +10,8 @@ This repository is a non-production research engine. The primary proof is direct
 - QuantConnect Cloud compile/backtest when available;
 - result import;
 - alpha replay;
+- active LLM agent decision ledger;
+- forecast scoring;
 - paper cycle;
 - shadow trading cycle;
 - pre-trade risk check;
@@ -23,6 +25,8 @@ Use narrow Detroit/classicist tests for high-value behavior:
 
 - typed schema validation;
 - numeric scoring;
+- active agent decision schema validation;
+- forecast scoring math such as Brier score and log score;
 - feature timestamp and lookahead rejection;
 - portfolio sizing math;
 - risk policy;
@@ -61,6 +65,9 @@ bun run test:e2e
 ./scripts/run-cloud-quality-backtest
 ./scripts/import-lean-run latest
 ./scripts/run-alpha-cycle
+bun --cwd=backend run lincei -- agent decide --json
+bun --cwd=backend run lincei -- agent score --json
+bun --cwd=backend run lincei -- broker simulate-paper-plan --json
 ./scripts/run-paper-cycle
 ./scripts/run-paper-replay
 ./scripts/live-preflight
@@ -75,12 +82,14 @@ The project must report elapsed validation time, not only backtest metrics. A st
 Promotion reports must include:
 
 - in-sample, out-of-sample, and shadow trading calendar spans;
+- prospective active LLM agent evaluation span when an active LLM agent is part of the strategy;
 - number of decisions, orders, fills, blocked decisions, and flat/abstain decisions;
+- Brier score, log score, calibration summary when available, realized return by horizon, and risk-veto counts for active LLM agent variants;
 - market regimes covered when known;
 - elapsed clock time since the strategy version first entered shadow trading or paper evaluation;
 - whether any result came from historical replay rather than current market evidence.
 
-No self-funded capital or Darwinex/Zero promotion can be based only on a unit-test suite, a local simulator run, or a same-day selected backtest.
+No self-funded capital or Darwinex/Zero promotion can be based only on a unit-test suite, a local simulator run, a same-day selected backtest, or historical LLM replay.
 
 ## Parallel Research Verification
 
@@ -112,6 +121,8 @@ Final reports must separate:
 - local LEAN evidence;
 - QuantConnect Cloud artifacts;
 - alpha replay evidence;
+- active LLM agent decision ledger evidence;
+- forecast label and scoring evidence;
 - paper trading/shadow trading evidence;
 - pre-trade risk check/reconciliation evidence;
 - blockers.

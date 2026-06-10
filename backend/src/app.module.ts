@@ -28,7 +28,7 @@ import { databaseEntities, databaseMigrations } from './data-source';
         migrationsRun: configService.get('TYPEORM_MIGRATIONS_RUN') === 'true',
         migrationsTransactionMode: 'all',
         synchronize:
-          configService.get('TYPEORM_SYNCHRONIZE', 'true') === 'true',
+          configService.get('TYPEORM_SYNCHRONIZE', 'false') === 'true',
         autoLoadEntities: true,
       }),
       inject: [ConfigService],

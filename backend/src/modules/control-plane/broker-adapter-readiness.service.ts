@@ -24,7 +24,9 @@ export class BrokerAdapterReadinessService {
       process.env.TOSS_OPEN_API_FILL_SCHEMA_VERIFIED === 'true';
     const fillPollingEnabled =
       process.env.TOSS_READ_ONLY_FILL_POLLER_ENABLED === 'true';
-    const fillPathConfigured = Boolean(process.env.TOSS_OPEN_API_FILLS_PATH);
+    const readOnlyFillPath =
+      process.env.TOSS_OPEN_API_FILLS_PATH ?? '/api/v1/orders';
+    const fillPathConfigured = Boolean(readOnlyFillPath);
     const sandboxVerified =
       process.env.TOSS_OPEN_API_SANDBOX_VERIFIED === 'true';
     const readOnlyEnabled =
@@ -49,7 +51,7 @@ export class BrokerAdapterReadinessService {
         status: configured ? 'configured' : 'blocked',
         detail: configured
           ? 'Toss credential environment variables are present and masked.'
-          : 'TOSS_OPEN_API_CLIENT_ID, TOSS_OPEN_API_CLIENT_SECRET, and TOSS_OPEN_API_ACCOUNT_REF are required.',
+          : 'TOSS_OPEN_API_CLIENT_ID, TOSS_OPEN_API_CLIENT_SECRET, and TOSS_OPEN_API_ACCOUNT_SEQ are required.',
       },
       {
         key: 'credentialCustody',
@@ -115,8 +117,8 @@ export class BrokerAdapterReadinessService {
           fillPollingEnabled &&
           fillSchemaVerified &&
           fillPathConfigured
-            ? 'Read-only fill polling can import broker fill evidence through the provider-neutral ledger.'
-            : 'Read-only fill polling requires snapshot readiness, TOSS_READ_ONLY_FILL_POLLER_ENABLED=true, TOSS_OPEN_API_FILL_SCHEMA_VERIFIED=true, and TOSS_OPEN_API_FILLS_PATH.',
+            ? 'Read-only open-order partial-fill polling can import broker fill evidence through the provider-neutral ledger.'
+            : 'Read-only open-order partial-fill polling requires snapshot readiness, TOSS_READ_ONLY_FILL_POLLER_ENABLED=true, and TOSS_OPEN_API_FILL_SCHEMA_VERIFIED=true.',
       },
       {
         key: 'reconciliation',
@@ -177,11 +179,14 @@ export class BrokerAdapterReadinessService {
         allowedEndpoints: [
           'POST /oauth2/token',
           'GET /api/v1/accounts',
-          'GET /v1/holdings',
+          'GET /api/v1/holdings',
+          'GET /api/v1/buying-power',
+          'GET /api/v1/exchange-rate',
+          'GET /api/v1/orders',
           ...(fillPollingEnabled &&
           fillSchemaVerified &&
-          process.env.TOSS_OPEN_API_FILLS_PATH
-            ? [`GET ${process.env.TOSS_OPEN_API_FILLS_PATH}`]
+          readOnlyFillPath !== '/api/v1/orders'
+            ? [`GET ${readOnlyFillPath}`]
             : []),
         ],
         cron: '*/5 * * * *',
@@ -204,7 +209,7 @@ export class BrokerAdapterReadinessService {
   private getEmergencyControlStatus(): BrokerEmergencyControlStatus {
     const blockers = [
       'Broker write access is disabled.',
-      'Broker open-order polling is not implemented.',
+      'Broker emergency open-order custody is not implemented.',
       'Broker cancel/replace endpoint is not implemented.',
       'Broker flatten-position order path is not implemented.',
       'Emergency broker action reconciliation is not implemented.',

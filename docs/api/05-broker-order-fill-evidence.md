@@ -114,7 +114,10 @@ Status: operator API reference for read-only broker order/fill evidence and poll
       "allowedEndpoints": [
         "POST /oauth2/token",
         "GET /api/v1/accounts",
-        "GET /v1/holdings"
+        "GET /api/v1/holdings",
+        "GET /api/v1/buying-power",
+        "GET /api/v1/exchange-rate",
+        "GET /api/v1/orders"
       ],
       "cron": "*/5 * * * *",
       "running": false,
@@ -131,7 +134,7 @@ Status: operator API reference for read-only broker order/fill evidence and poll
       "dryRunOnly": true,
       "blockers": [
         "Broker write access is disabled.",
-        "Broker open-order polling is not implemented.",
+        "Broker emergency open-order custody is not implemented.",
         "Broker cancel/replace endpoint is not implemented.",
         "Broker flatten-position order path is not implemented.",
         "Emergency broker action reconciliation is not implemented."
@@ -167,7 +170,7 @@ Status: operator API reference for read-only broker order/fill evidence and poll
 
 #### `POST /control-plane/broker-adapter/poll-read-only`
 
-- **Description**: Attempts a Toss read-only snapshot poll, disabled by default. The same poller also runs every five minutes but immediately returns unless it can poll. It requires `BROKER_READ_ONLY_ENABLED=true`, `TOSS_READ_ONLY_POLLER_ENABLED=true`, Toss credentials/account ref, and `TOSS_OPEN_API_SCHEMA_VERIFIED=true`. The adapter allowlist permits `POST /oauth2/token`, `GET /api/v1/accounts`, and `GET /v1/holdings`, then imports the mapped snapshot through the same broker snapshot ledger. After import it attempts an automatic paper-account reconciliation and records the result in the read-only poll status. It has no order, preview, cancel, or modify endpoint.
+- **Description**: Attempts a Toss read-only snapshot poll, disabled by default. The same poller also runs every five minutes but immediately returns unless it can poll. It requires `BROKER_READ_ONLY_ENABLED=true`, `TOSS_READ_ONLY_POLLER_ENABLED=true`, Toss credentials/account ref, and `TOSS_OPEN_API_SCHEMA_VERIFIED=true`. The adapter allowlist permits token issuance, account discovery, holdings, buying power, USD/KRW exchange rate, and read-only open-order observation. Snapshot polling combines `/api/v1/holdings`, `/api/v1/buying-power`, and `/api/v1/exchange-rate` into the provider-neutral broker snapshot ledger. After import it attempts an automatic paper-account reconciliation and records the result in the read-only poll status. It has no order create, preview, cancel, modify, or flatten endpoint.
 - **Response Notes**:
   - returns `{ "status": BrokerAdapterReadOnlyPollStatus, "snapshot": BrokerSnapshot }` on success;
   - returns `400` when disabled or unverified;
@@ -176,10 +179,10 @@ Status: operator API reference for read-only broker order/fill evidence and poll
 
 #### `POST /control-plane/broker-adapter/poll-read-only-fills`
 
-- **Description**: Attempts a Toss read-only fill poll, disabled by default. This endpoint is intentionally path-configured because the exact Toss fill/execution schema is not publicly verified in this repo. It requires the snapshot poll gates plus `TOSS_READ_ONLY_FILL_POLLER_ENABLED=true`, `TOSS_OPEN_API_FILL_SCHEMA_VERIFIED=true`, and a relative `TOSS_OPEN_API_FILLS_PATH`. The adapter only permits `GET` to that configured path, maps returned executions/fills into provider-neutral `ImportBrokerFillRequest` objects, imports them through `broker_fills`, and reuses paper-fill matching.
+- **Description**: Attempts a Toss read-only open-order/partial-fill poll, disabled by default. It requires the snapshot poll gates plus `TOSS_READ_ONLY_FILL_POLLER_ENABLED=true` and `TOSS_OPEN_API_FILL_SCHEMA_VERIFIED=true`. The default source is the official `GET /api/v1/orders?status=OPEN` path. `TOSS_OPEN_API_FILLS_PATH` may override the read-only source path, but absolute URLs and write endpoints remain blocked. The mapper imports open-order lifecycle observations into provider-neutral `ImportBrokerOrderStatusRequest` objects and imports only orders with positive execution quantity into provider-neutral `ImportBrokerFillRequest` objects.
 - **Response Notes**:
-  - returns `{ "status": BrokerAdapterReadOnlyPollStatus, "fills": BrokerFill[] }` on success;
-  - returns `400` when disabled, unverified, or missing a configured fill path;
+  - returns `{ "status": BrokerAdapterReadOnlyPollStatus, "fills": BrokerFill[], "orderStatuses": BrokerOrderStatusRecord[] }` on success;
+  - returns `400` when disabled or unverified;
   - duplicate provider fill refs replay idempotently through the hashed `brokerFillRefHash`;
   - `brokerExecutionEnabled` and `liveTradingEnabled` remain `false`.
 

@@ -49,7 +49,7 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     gate: "parallel",
     sourceStageKey: "hypothesis_registry",
     detail: "Stored research articles become testable strategy hypotheses.",
-    command: "./scripts/build-hypothesis-registry",
+    command: "bun --cwd=backend run lincei -- research corpus",
   },
   {
     key: "variant_evidence",
@@ -58,7 +58,7 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     gate: "parallel",
     sourceStageKey: "variant_evidence",
     detail: "Ablation, backtest, and Cloud-import variants are retained.",
-    command: "./scripts/run-selected-run-bias-check",
+    command: "bun --cwd=backend run lincei -- research selected-run-bias",
   },
   {
     key: "feature_store",
@@ -67,7 +67,7 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     gate: "parallel",
     sourceStageKey: "feature_store",
     detail: "Numeric and text-derived features cite availability time.",
-    command: "./scripts/run-alpha-cycle",
+    command: "bun --cwd=backend run lincei -- alpha run",
   },
   {
     key: "semantic_data",
@@ -76,7 +76,7 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     gate: "parallel",
     detail: "Macro/news/filing text becomes replayable LLM-derived features.",
     command:
-      "./scripts/ingest-semantic-evidence --source hf-fomc-statements-minutes",
+      "bun --cwd=backend run lincei -- data semantic-evidence --limit 80",
   },
   {
     key: "alpha_decisions",
@@ -85,7 +85,17 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     gate: "parallel",
     sourceStageKey: "alpha_decisions",
     detail: "Numeric, LLM-derived, and meta alpha decisions stay typed.",
-    command: "./scripts/run-alpha-cycle",
+    command: "bun --cwd=backend run lincei -- alpha run",
+  },
+  {
+    key: "active_llm_agent",
+    label: "Active LLM Agent",
+    lane: "execution",
+    gate: "single-writer",
+    sourceStageKey: "active_llm_agent",
+    detail: "LLM forecasts become risk-gated shadow and paper evidence.",
+    command:
+      "bun --cwd=backend run lincei -- agent decide --json && bun --cwd=backend run lincei -- agent shadow --json && bun --cwd=backend run lincei -- agent paper --json",
   },
   {
     key: "lean_backtest",
@@ -95,7 +105,7 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     sourceStageKey: "lean_backtest",
     detail: "LEAN artifacts prove executable strategy behavior.",
     command:
-      "./scripts/run-v1-cycle --skip-alpha-cycle --skip-market-data-ingest --no-download-data",
+      "bun --cwd=backend run lincei -- lean full-backtest --skip-alpha-cycle --skip-market-data-ingest --no-download-data",
   },
   {
     key: "cloud_import",
@@ -105,7 +115,7 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     sourceStageKey: "cloud_import",
     detail: "Cloud backtest results anchor promotion evidence.",
     command:
-      "./scripts/import-cloud-backtest --project-id <project-id> --backtest-id <backtest-id>",
+      "bun --cwd=backend run lincei -- qc import-backtest --project-id <project-id> --backtest-id <backtest-id>",
   },
   {
     key: "portfolio_targets",
@@ -114,7 +124,7 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     gate: "single-writer",
     sourceStageKey: "portfolio_targets",
     detail: "LEAN insights become one canonical target snapshot.",
-    command: "./scripts/import-lean-run latest",
+    command: "bun --cwd=backend run lincei -- lean import latest",
   },
   {
     key: "paper_execution",
@@ -123,7 +133,8 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     gate: "single-writer",
     sourceStageKey: "paper_execution",
     detail: "Targets become paper or shadow trading execution artifacts.",
-    command: "./scripts/run-paper-cycle && ./scripts/run-live-shadow",
+    command:
+      "bun --cwd=backend run lincei -- paper run && bun --cwd=backend run lincei -- shadow run",
   },
   {
     key: "broker_read_only",
@@ -132,7 +143,7 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     gate: "single-writer",
     sourceStageKey: "broker_read_only",
     detail: "Read-only broker snapshots reconcile observed account state.",
-    command: "./scripts/live-preflight",
+    command: "bun --cwd=backend run lincei -- broker status",
   },
   {
     key: "open_orders",
@@ -141,7 +152,7 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     gate: "single-writer",
     sourceStageKey: "open_orders",
     detail: "Unknown or mismatched broker order state blocks advancement.",
-    command: "./scripts/live-preflight",
+    command: "bun --cwd=backend run lincei -- preflight run",
   },
   {
     key: "preflight",
@@ -150,7 +161,7 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     gate: "single-writer",
     sourceStageKey: "live_preflight",
     detail: "Unknown, stale, or unsafe state stays blocked.",
-    command: "./scripts/live-preflight",
+    command: "bun --cwd=backend run lincei -- preflight run",
   },
   {
     key: "learning",
@@ -158,7 +169,7 @@ export const CYCLE_STAGES: CycleStageDefinition[] = [
     lane: "learning",
     gate: "single-writer",
     detail: "Outcomes feed promotion, rejection, and model review.",
-    command: "./scripts/run-learning-loop",
+    command: "bun --cwd=backend run lincei -- learning run",
   },
   {
     key: "broker_write_spec",
@@ -193,39 +204,46 @@ export const CYCLE_RUNBOOK = [
   {
     label: "Build hypothesis and variant ledger",
     command:
-      "./scripts/build-hypothesis-registry && ./scripts/run-selected-run-bias-check",
+      "bun --cwd=backend run lincei -- research corpus && bun --cwd=backend run lincei -- research selected-run-bias",
     evidence:
       "research hypotheses, retained variants, multiple-testing bias blockers",
   },
   {
     label: "Refresh point-in-time features",
     command:
-      "./scripts/ingest-semantic-evidence --source hf-fomc-statements-minutes --limit 80 && ./scripts/run-alpha-cycle",
+      "bun --cwd=backend run lincei -- data semantic-evidence --limit 80 && bun --cwd=backend run lincei -- alpha run",
     evidence: "feature snapshots, LLM-derived features, alpha decisions",
   },
   {
     label: "Run local LEAN smoke",
     command:
-      "./scripts/run-v1-cycle --skip-alpha-cycle --skip-market-data-ingest --no-download-data",
+      "bun --cwd=backend run lincei -- lean full-backtest --skip-alpha-cycle --skip-market-data-ingest --no-download-data",
     evidence:
       "local LEAN artifacts, portfolio target import, paper-cycle blocker",
   },
   {
     label: "Import QuantConnect Cloud artifacts",
     command:
-      "./scripts/list-cloud-backtests --project-id <project-id> --limit 10 && ./scripts/import-cloud-backtest --project-id <project-id> --backtest-id <backtest-id>",
+      "bun --cwd=backend run lincei -- qc list-backtests --project-id <project-id> --limit 10 && bun --cwd=backend run lincei -- qc import-backtest --project-id <project-id> --backtest-id <backtest-id>",
     evidence: "Cloud statistics, insights, orders, fills, hashes, blockers",
   },
   {
     label: "Advance single-writer evidence",
     command:
-      "./scripts/run-paper-cycle && ./scripts/run-live-shadow && ./scripts/live-preflight",
+      "bun --cwd=backend run lincei -- paper run && bun --cwd=backend run lincei -- shadow run && bun --cwd=backend run lincei -- preflight run",
     evidence:
       "paper trading artifacts, shadow trading record, fail-closed pre-trade risk check",
   },
   {
+    label: "Run active LLM paper arena",
+    command:
+      "bun --cwd=backend run lincei -- agent decide --json && bun --cwd=backend run lincei -- agent shadow --json && bun --cwd=backend run lincei -- agent paper --json",
+    evidence:
+      "active LLM decisions, risk-gated shadow, paper plan, reconciliation",
+  },
+  {
     label: "Review promotion state",
-    command: "./scripts/run-learning-loop",
+    command: "bun --cwd=backend run lincei -- learning run",
     evidence: "promotion decision, outcome labels, remaining blockers",
   },
 ];
@@ -296,6 +314,16 @@ export const buildCycleMetrics = (
       status?.paper.reconciliationStatus === "matched" ? "positive" : "warning",
   },
   {
+    label: "Active Agent",
+    value: activeAgentMetricValue(status),
+    tone:
+      status?.activeAgent?.paperReconciliationStatus === "matched"
+        ? "positive"
+        : status?.activeAgent?.runId
+          ? "warning"
+          : "danger",
+  },
+  {
     label: "Pre-Trade Check",
     value: status?.preflight.status ?? "blocked",
     tone: status?.preflight.status === "ready" ? "positive" : "danger",
@@ -347,6 +375,13 @@ const paperMetricValue = (status: V1PilotSystemStatus | null): string => {
     return `replay/${status.paper.replayReconciliationStatus ?? "unknown"}`;
   }
   return "missing";
+};
+
+const activeAgentMetricValue = (status: V1PilotSystemStatus | null): string => {
+  if (!status?.activeAgent?.runId) {
+    return "missing";
+  }
+  return `${status.activeAgent.proposedDecisionCount}/${status.activeAgent.decisionCount} decisions / ${status.activeAgent.paperReconciliationStatus ?? "paper missing"}`;
 };
 
 const findSourceStage = (

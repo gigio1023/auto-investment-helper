@@ -3,8 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { AlphaDecision } from '../../../entities/alpha-decision.entity';
 import { AlphaOutcomeLabel } from '../../../entities/alpha-outcome-label.entity';
+import { AgentDecisionRecord } from '../../../entities/agent-decision-record.entity';
+import { AgentEvaluationRun } from '../../../entities/agent-evaluation-run.entity';
+import { AgentForecastLabel } from '../../../entities/agent-forecast-label.entity';
 import { LiveShadowRecord } from '../../../entities/live-shadow-record.entity';
 import { MarketDataBar } from '../../../entities/market-data-bar.entity';
+import { PaperOrderPlan } from '../../../entities/paper-order-plan.entity';
 import { PromotionDecision } from '../../../entities/promotion-decision.entity';
 import { hashObject } from '../../../shared/hash.util';
 import { alphaHorizonHours } from '../contracts/spec-contracts';
@@ -25,16 +29,31 @@ export class LearningLoopService {
     private readonly liveShadowRepository: Repository<LiveShadowRecord>,
     @InjectRepository(PromotionDecision)
     private readonly promotionRepository: Repository<PromotionDecision>,
+    @InjectRepository(AgentEvaluationRun)
+    private readonly agentRunRepository: Repository<AgentEvaluationRun>,
+    @InjectRepository(AgentDecisionRecord)
+    private readonly agentDecisionRepository: Repository<AgentDecisionRecord>,
+    @InjectRepository(AgentForecastLabel)
+    private readonly agentLabelRepository: Repository<AgentForecastLabel>,
+    @InjectRepository(PaperOrderPlan)
+    private readonly paperPlanRepository: Repository<PaperOrderPlan>,
     private readonly researchFactoryService: ResearchFactoryService,
   ) {}
 
   async runLearningLoop(): Promise<{
     labelsCreated: number;
     promotionDecision: PromotionDecision;
+    activeAgentPromotionDecision: PromotionDecision;
   }> {
     const labels = await this.labelAvailableAlphaOutcomes();
     const promotionDecision = await this.recordStrategyPromotionDecision();
-    return { labelsCreated: labels.length, promotionDecision };
+    const activeAgentPromotionDecision =
+      await this.recordActiveAgentPromotionDecision();
+    return {
+      labelsCreated: labels.length,
+      promotionDecision,
+      activeAgentPromotionDecision,
+    };
   }
 
   async labelAvailableAlphaOutcomes(): Promise<AlphaOutcomeLabel[]> {
@@ -62,12 +81,9 @@ export class LearningLoopService {
 
   async recordStrategyPromotionDecision(): Promise<PromotionDecision> {
     const latestRun = await this.leanRunImportService.getLatestStrategyRun();
-    const liveShadow = (
-      await this.liveShadowRepository.find({
-        order: { createdAt: 'DESC' },
-        take: 1,
-      })
-    )[0];
+    const liveShadow = await this.findLatestLeanOwnedShadowRecord(
+      latestRun?.runId,
+    );
     const decidedAt = new Date().toISOString();
     const blockers: string[] = [];
 
@@ -134,11 +150,166 @@ export class LearningLoopService {
 
     return this.promotionRepository.save(
       this.promotionRepository.create({
-        id: `promotion-${decidedAt.replace(/[-:TZ.]/g, '').slice(0, 14)}`,
+        id: this.promotionId('promotion', decidedAt, payload),
         decisionHash: hashObject(payload),
         ...payload,
       }),
     );
+  }
+
+  async recordActiveAgentPromotionDecision(): Promise<PromotionDecision> {
+    const latestRun = await this.agentRunRepository.findOne({
+      where: {},
+      order: { startedAt: 'DESC' },
+    });
+    const decidedAt = new Date().toISOString();
+    const blockers: string[] = [];
+    const decisions = latestRun
+      ? await this.agentDecisionRepository.find({
+          where: { runId: latestRun.runId },
+          order: { createdAt: 'DESC' },
+        })
+      : [];
+    const labels = latestRun
+      ? await this.agentLabelRepository.find({
+          where: { runId: latestRun.runId, status: 'labeled' },
+          order: { createdAt: 'DESC' },
+        })
+      : [];
+    const shadow = latestRun
+      ? await this.findLatestActiveAgentShadowRecord(latestRun.runId)
+      : undefined;
+    const paperPlan = latestRun
+      ? await this.findLatestActiveAgentPaperPlan(latestRun.runId)
+      : undefined;
+
+    if (!latestRun) {
+      blockers.push('No active LLM agent run exists.');
+    } else {
+      if (latestRun.status !== 'passed') {
+        blockers.push(
+          `Latest active LLM agent run status is ${latestRun.status}.`,
+        );
+      }
+      if (!decisions.some((decision) => decision.status === 'proposed')) {
+        blockers.push('No proposed active LLM decisions are available.');
+      }
+      if (labels.length === 0) {
+        blockers.push('No labeled active LLM forecasts are available yet.');
+      }
+      if (!shadow || shadow.status !== 'recorded') {
+        blockers.push('No recorded active LLM shadow arena exists.');
+      }
+      if (!paperPlan || !['filled', 'reconciled'].includes(paperPlan.status)) {
+        blockers.push('No filled active LLM paper order-plan exists.');
+      }
+      if (paperPlan && paperPlan.reconciliation?.status !== 'matched') {
+        blockers.push('Active LLM paper order-plan is not reconciled.');
+      }
+      blockers.push(
+        'Active LLM promotion thresholds are not configured; recording evidence only.',
+      );
+    }
+
+    const evidenceRefs = [
+      ...(latestRun ? [`agent-run:${latestRun.runId}`] : []),
+      ...decisions.map((decision) => `agent-decision:${decision.id}`),
+      ...labels.map((label) => `agent-forecast-label:${label.id}`),
+      ...(shadow ? [`live-shadow:${shadow.id}`] : []),
+      ...(paperPlan ? [`paper-order-plan:${paperPlan.id}`] : []),
+    ];
+    const targetRef = latestRun
+      ? `strategy:active-llm-agent:${latestRun.strategyVariant}:${latestRun.runId}`
+      : 'strategy:active-llm-agent:missing-run';
+    const metrics = {
+      runPresent: Boolean(latestRun),
+      decisionCount: decisions.length,
+      proposedDecisionCount: decisions.filter(
+        (decision) => decision.status === 'proposed',
+      ).length,
+      labeledForecastCount: labels.length,
+      averageBrierScore: average(labels.map((label) => label.brierScore)),
+      averageLogScore: average(labels.map((label) => label.logScore)),
+      activeAgentShadowRecorded: shadow?.status === 'recorded',
+      wouldHaveTradedCount: Array.isArray(shadow?.wouldHaveTraded)
+        ? shadow.wouldHaveTraded.length
+        : 0,
+      paperPlanStatus: paperPlan?.status ?? null,
+      reconciliationMatched: paperPlan?.reconciliation?.status === 'matched',
+      brokerWriteAllowed: false,
+      brokerWriteSpecApproved: false,
+    };
+    const payload = {
+      scope: 'strategy' as const,
+      targetRef,
+      decidedAt,
+      status: 'blocked' as const,
+      evidenceRefs,
+      blockerReasons: blockers,
+      metrics,
+    };
+
+    return this.promotionRepository.save(
+      this.promotionRepository.create({
+        id: this.promotionId('active-agent-promotion', decidedAt, payload),
+        decisionHash: hashObject(payload),
+        ...payload,
+      }),
+    );
+  }
+
+  private async findLatestLeanOwnedShadowRecord(
+    leanRunId: string | undefined,
+  ): Promise<LiveShadowRecord | undefined> {
+    if (!leanRunId) {
+      return undefined;
+    }
+    const candidates = await this.liveShadowRepository.find({
+      order: { createdAt: 'DESC' },
+      take: 50,
+    });
+    return candidates.find(
+      (record) =>
+        record.leanRunId === leanRunId &&
+        Boolean(record.portfolioTargetSnapshotId) &&
+        record.evidenceRefs.includes(`lean-run:${leanRunId}`) &&
+        record.evidenceRefs.some((ref) =>
+          ref.startsWith('portfolio-target:'),
+        ) &&
+        !record.evidenceRefs.includes('evidence-mode:active-llm-agent-shadow'),
+    );
+  }
+
+  private async findLatestActiveAgentShadowRecord(
+    runId: string,
+  ): Promise<LiveShadowRecord | undefined> {
+    const candidates = await this.liveShadowRepository.find({
+      order: { createdAt: 'DESC' },
+      take: 50,
+    });
+    return candidates.find(
+      (record) =>
+        record.evidenceRefs.includes(`agent-run:${runId}`) &&
+        record.evidenceRefs.includes('evidence-mode:active-llm-agent-shadow'),
+    );
+  }
+
+  private async findLatestActiveAgentPaperPlan(
+    runId: string,
+  ): Promise<PaperOrderPlan | undefined> {
+    const plans = await this.paperPlanRepository.find({
+      order: { updatedAt: 'DESC' },
+      take: 50,
+    });
+    return plans.find((plan) =>
+      plan.idempotencyKey.startsWith(`active-agent-paper:${runId}:`),
+    );
+  }
+
+  private promotionId(prefix: string, decidedAt: string, payload: unknown) {
+    const time = decidedAt.replace(/[-:TZ.]/g, '').slice(0, 14);
+    const suffix = hashObject(payload).replace('sha256:', '').slice(0, 10);
+    return `${prefix}-${time}-${suffix}`;
   }
 
   private async buildLabel(
@@ -222,4 +393,17 @@ export class LearningLoopService {
     }
     return Number(((endPrice / startPrice - 1) * 10_000).toFixed(4));
   }
+}
+
+function average(values: Array<number | undefined>): number | null {
+  const finite = values.filter(
+    (value): value is number =>
+      typeof value === 'number' && Number.isFinite(value),
+  );
+  if (!finite.length) {
+    return null;
+  }
+  return Number(
+    (finite.reduce((sum, value) => sum + value, 0) / finite.length).toFixed(6),
+  );
 }

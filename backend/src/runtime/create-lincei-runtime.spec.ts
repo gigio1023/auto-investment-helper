@@ -29,57 +29,57 @@ describe('createLinceiRuntime', () => {
       expect(runtime.orchestrator).toBeDefined();
       expect(runtime.statusService).toBeDefined();
       expect(runtime.capitalEvidenceSliceService).toBeDefined();
+      expect(runtime.activeLlmAgentService).toBeDefined();
+      expect(runtime.activeLlmAgentShadowService).toBeDefined();
+      expect(runtime.activeLlmPaperBridgeService).toBeDefined();
+      expect(runtime.simulatedBrokerRehearsalService).toBeDefined();
     } finally {
       await runtime.close();
       rmSync(dir, { recursive: true, force: true });
     }
   });
 
-  it(
-    'can replay the alpha cycle without duplicate primary-key failures',
-    async () => {
-      const dir = mkdtempSync(join(tmpdir(), 'lincei-runtime-alpha-'));
-      const openAiEnvPath = join(dir, 'openai.env');
-      writeFileSync(openAiEnvPath, 'OPENAI_API_KEY=test-openai-key\n');
-      process.env.LINCEI_OPENAI_ENV_FILE = openAiEnvPath;
-      process.env.V1_UNIVERSE_SYMBOLS = 'SPY,QQQ';
-      const runtime = await createLinceiRuntime({
-        databasePath: join(dir, 'runtime.sqlite'),
-        synchronize: true,
-        dropSchema: true,
-        loadEnv: false,
+  it('can replay the alpha cycle without duplicate primary-key failures', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'lincei-runtime-alpha-'));
+    const openAiEnvPath = join(dir, 'openai.env');
+    writeFileSync(openAiEnvPath, 'OPENAI_API_KEY=test-openai-key\n');
+    process.env.LINCEI_OPENAI_ENV_FILE = openAiEnvPath;
+    process.env.V1_UNIVERSE_SYMBOLS = 'SPY,QQQ';
+    const runtime = await createLinceiRuntime({
+      databasePath: join(dir, 'runtime.sqlite'),
+      synchronize: true,
+      dropSchema: true,
+      loadEnv: false,
+    });
+
+    try {
+      await seedBars(runtime.dataSource.getRepository(MarketDataBar));
+
+      const first = await runtime.orchestrator.runAlphaCycle();
+      const second = await runtime.orchestrator.runAlphaCycle();
+
+      expect(first).toMatchObject({
+        featureCount: 2,
+        numericCount: 2,
+        llmFeatureCount: 6,
+        llmCount: 6,
+        metaCount: 2,
       });
-
-      try {
-        await seedBars(runtime.dataSource.getRepository(MarketDataBar));
-
-        const first = await runtime.orchestrator.runAlphaCycle();
-        const second = await runtime.orchestrator.runAlphaCycle();
-
-        expect(first).toMatchObject({
-          featureCount: 2,
-          numericCount: 2,
-          llmFeatureCount: 6,
-          llmCount: 6,
-          metaCount: 2,
-        });
-        expect(second).toEqual(first);
-        await expect(
-          runtime.dataSource.getRepository(FeatureSnapshot).count(),
-        ).resolves.toBe(2);
-        await expect(
-          runtime.dataSource.getRepository(LlmEventFeature).count(),
-        ).resolves.toBe(6);
-        await expect(
-          runtime.dataSource.getRepository(AlphaDecision).count(),
-        ).resolves.toBe(10);
-      } finally {
-        await runtime.close();
-        rmSync(dir, { recursive: true, force: true });
-      }
-    },
-    20_000,
-  );
+      expect(second).toEqual(first);
+      await expect(
+        runtime.dataSource.getRepository(FeatureSnapshot).count(),
+      ).resolves.toBe(2);
+      await expect(
+        runtime.dataSource.getRepository(LlmEventFeature).count(),
+      ).resolves.toBe(6);
+      await expect(
+        runtime.dataSource.getRepository(AlphaDecision).count(),
+      ).resolves.toBe(10);
+    } finally {
+      await runtime.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 20_000);
 });
 
 async function seedBars(repository: Repository<MarketDataBar>) {

@@ -84,4 +84,6 @@ Toss Securities Open API should be treated as live broker access until an offici
 - order payloads and credentials are rejected from frontend/LLM paths;
 - submit, cancel, replace, and flatten remain out of scope.
 
-See [Toss Securities Open API Readiness](toss-open-api-readiness.md) for source-specific details.
+See [Toss OpenAPI Source Index](toss-openapi-source-index.md) for official
+fetch links and [Toss Securities Open API Readiness](toss-open-api-readiness.md)
+for source-specific integration notes.

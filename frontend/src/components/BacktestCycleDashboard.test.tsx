@@ -135,7 +135,8 @@ describe("BacktestCycleDashboard", () => {
     ).toBeGreaterThan(0);
     expect(screen.getByText("Operator Runbook")).toBeInTheDocument();
     expect(
-      screen.getAllByText("./scripts/run-learning-loop").length,
+      screen.getAllByText("bun --cwd=backend run lincei -- learning run")
+        .length,
     ).toBeGreaterThan(0);
   });
 });

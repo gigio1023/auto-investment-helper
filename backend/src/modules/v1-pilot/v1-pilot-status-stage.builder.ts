@@ -15,6 +15,7 @@ export interface V1SystemStageInput {
   latestCloudRun: LeanRun | null;
   portfolioTarget: V1PilotSystemStatus['portfolioTarget'];
   paper: V1PilotSystemStatus['paper'];
+  activeAgent: V1PilotSystemStatus['activeAgent'];
   broker: V1PilotSystemStatus['broker'];
   preflight: LivePilotPreflightContract;
   livePilot: V1PilotSystemStatus['livePilot'];
@@ -99,6 +100,23 @@ export function buildV1SystemStages(
         ? []
         : ['Latest LEAN run has not passed strict import gates.'],
       input.latestLeanRun ? [input.latestLeanRun.runId] : [],
+    ),
+    stage(
+      'active_llm_agent',
+      'Active LLM Agent',
+      activeAgentStatus(input.activeAgent),
+      input.activeAgent.runId
+        ? `run=${input.activeAgent.runId}, decisions=${input.activeAgent.proposedDecisionCount}/${input.activeAgent.decisionCount}, shadow=${input.activeAgent.latestShadowStatus ?? 'missing'}, paper=${input.activeAgent.paperPlanStatus ?? 'missing'}`
+        : 'No active LLM agent run exists.',
+      activeAgentBlockers(input.activeAgent),
+      [
+        input.activeAgent.runId,
+        input.activeAgent.latestShadowId,
+        input.activeAgent.paperPlanId
+          ? String(input.activeAgent.paperPlanId)
+          : undefined,
+        input.activeAgent.promotionDecisionId,
+      ].filter((ref): ref is string => Boolean(ref)),
     ),
     stage(
       'cloud_import',
@@ -293,6 +311,47 @@ function variantEvidenceBlockers(
       : '',
     research.failedOrBlockedVariantJobCount <= 0
       ? 'No failed or blocked variant job is recorded; multiple-testing bias protection needs rejected artifacts too.'
+      : '',
+  ].filter((blocker): blocker is string => blocker.length > 0);
+}
+
+function activeAgentStatus(
+  activeAgent: V1PilotSystemStatus['activeAgent'],
+): V1SystemStageStatus {
+  if (!activeAgent.runId) {
+    return 'missing';
+  }
+  return activeAgentBlockers(activeAgent).length > 0 ? 'blocked' : 'ready';
+}
+
+function activeAgentBlockers(
+  activeAgent: V1PilotSystemStatus['activeAgent'],
+): string[] {
+  return [
+    activeAgent.runStatus !== 'passed'
+      ? `Latest active LLM agent run status is ${activeAgent.runStatus}.`
+      : '',
+    activeAgent.proposedDecisionCount <= 0
+      ? 'No proposed active LLM decisions are available.'
+      : '',
+    activeAgent.latestShadowStatus !== 'recorded'
+      ? 'No recorded active LLM shadow arena exists.'
+      : '',
+    !['filled', 'reconciled'].includes(activeAgent.paperPlanStatus ?? '')
+      ? 'No filled active LLM paper order-plan exists.'
+      : '',
+    activeAgent.paperReconciliationStatus !== 'matched'
+      ? 'Active LLM paper order-plan is not reconciled.'
+      : '',
+    activeAgent.labeledForecastCount <= 0
+      ? 'No labeled active LLM forecasts are available yet.'
+      : '',
+    !activeAgent.promotionStatus
+      ? 'Active LLM promotion decision has not been recorded.'
+      : '',
+    activeAgent.promotionStatus !== 'accepted' &&
+    activeAgent.promotionBlockerCount > 0
+      ? 'Active LLM promotion decision is still blocked.'
       : '',
   ].filter((blocker): blocker is string => blocker.length > 0);
 }

@@ -2,7 +2,7 @@
 
 Status: active normative spec.
 
-Last aligned: 2026-05-27.
+Last aligned: 2026-06-01.
 
 ## Roadmap Principle
 
@@ -12,8 +12,11 @@ The roadmap prioritizes the self-funded capital evidence loop:
 research hypothesis
   -> point-in-time data
   -> simple baseline
-  -> parallel ablations and backtests
-  -> LEAN / QuantConnect validation
+  -> active LLM agent decision ledger
+  -> prospective paper/shadow agent evaluation
+  -> forecast scoring
+  -> parallel ablations and baseline backtests
+  -> LEAN / QuantConnect validation for backtestable paths
   -> paper trading/shadow trading
   -> reconciliation
   -> broker-read-only proof
@@ -104,7 +107,29 @@ Acceptance:
 - local simulator/sample-data runs cannot pass promotion gates;
 - a baseline can be rejected with evidence rather than quietly discarded.
 
-## Phase 6: LLM Semantic Alpha Feed And Ablations
+## Phase 6: Active LLM Agent Decision Ledger
+
+Deliver:
+
+- active agent decision records with prompt, policy, tool, and memory versions;
+- typed forecasts, theses, counter-theses, invalidation conditions, risk notes,
+  and action plans;
+- missing-credential and stale-input blockers;
+- CLI commands for `agent decide`, `agent score`, `agent shadow`, and
+  `agent paper`;
+- forecast labels with Brier score and log score.
+
+Acceptance:
+
+- LLM output cannot contain broker payloads or final order quantities;
+- every decision has input/output hashes and evidence refs;
+- blocked and abstained decisions are retained;
+- forecast scoring separates probability quality from trading PnL;
+- risk-gated active-agent action hints produce shadow and paper-order-plan
+  artifacts without broker writes;
+- active LLM agent evidence is reported separately from historical backtests.
+
+## Phase 7: LLM-Derived Feature Feed And Ablations
 
 Deliver:
 
@@ -123,7 +148,9 @@ Acceptance:
 - LLM-derived features are compared against simple baselines;
 - LLM-derived research hypotheses are labeled separately from executable alpha evidence.
 
-## Phase 7: Meta Alpha, Insight Adapter, And Cloud Promotion
+## Phase 8: Meta Alpha, Insight Adapter, And Cloud Promotion
+
+Renumbered long-term phase: this follows active agent and feature-feed work.
 
 Deliver:
 
@@ -144,14 +171,18 @@ Acceptance:
 - baseline, LLM, and combined variants can be compared without multiple-testing bias;
 - Cloud command success is blocked until real Cloud result artifacts are imported and pass evidence gates.
 
-## Phase 8: Paper, Live-Shadow, And Learning Loop
+## Phase 9: Paper, Shadow, Agent Arena, And Learning Loop
 
 Deliver:
 
 - paper order bridge from LEAN targets;
 - paper reconciliation;
 - shadow trading mode that records proposed trades without broker writes;
+- prospective paper/shadow arena for active LLM agent variants;
+- active-agent paper order-plan bridge through the existing paper execution and
+  reconciliation ledgers;
 - result labels by horizon;
+- forecast scoring and calibration reports;
 - feature/decision outcome joins;
 - model and prompt performance tracking;
 - failure review workflow;
@@ -161,11 +192,13 @@ Acceptance:
 
 - one full paper cycle runs from alpha decision to fill ledger;
 - shadow trading produces current would-have-traded evidence;
+- active LLM agent variants produce current prospective decision, paper/shadow,
+  and label evidence;
 - historical paper replay is separated from current readiness;
 - kill switch and reconciliation mismatches block new exposure;
 - promotion decisions require Cloud plus current paper trading/shadow trading evidence.
 
-## Phase 9: Oracle Cloud ARM Always-On Control Plane
+## Phase 10: Oracle Cloud ARM Always-On Control Plane
 
 Deliver:
 
@@ -181,7 +214,7 @@ Acceptance:
 - missed schedules, stale data, failed imports, and reconciliation mismatches create blocked evidence and alerts;
 - Oracle Cloud ARM does not introduce broker writes before the broker-write implementation spec.
 
-## Phase 10: Broker-Read-Only Reconciliation
+## Phase 11: Broker-Read-Only Reconciliation
 
 Deliver:
 
@@ -197,7 +230,7 @@ Acceptance:
 - broker credentials never enter LLM prompts, frontend state, logs, or research artifacts;
 - reconciliation mismatches block broker-write readiness.
 
-## Phase 11: Self-Funded Capital Broker-Write Spec And Adapter
+## Phase 12: Self-Funded Capital Broker-Write Spec And Adapter
 
 Deliver:
 
@@ -219,7 +252,7 @@ Acceptance:
 
 This phase approves implementation only when the user explicitly approves the broker-write spec. It is not approved by earlier phases alone.
 
-## Phase 12: Darwinex/Zero Track-Record Path
+## Phase 13: Darwinex/Zero Track-Record Path
 
 Deliver:
 
@@ -238,7 +271,7 @@ Acceptance:
 - Darwinex sizing/risk standardization is reported separately from our intended target;
 - performance-fee claims come from Darwinex/Zero evidence, not from QuantConnect backtests.
 
-## Phase 13: Operational Review And Capital Scaling
+## Phase 14: Operational Review And Capital Scaling
 
 Deliver:
 

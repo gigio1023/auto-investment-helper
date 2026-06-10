@@ -32,6 +32,7 @@ These documents explain subsystem intent. If they conflict with `SPEC.md`, `SPEC
 - [Latency and Execution Paths](latency-and-execution-paths.md)
 - [Model Training Plan](model-training-plan.md)
 - [ML External Baselines Research](ml-external-baselines-research.md)
+- [Toss OpenAPI Source Index](toss-openapi-source-index.md)
 - [Toss Securities Open API Readiness](toss-open-api-readiness.md)
 - [Self-Funded Capital Architecture Review From Alpha Architect Corpus](own-capital-alphaarchitect-corpus-review.md)
 

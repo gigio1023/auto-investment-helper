@@ -5136,7 +5136,7 @@ export class ControlPlaneService {
         : undefined,
       isEmergencyCommand &&
       !input.brokerAdapterStatus.emergencyControls.openOrderPollingReady
-        ? 'Broker open-order polling is not implemented'
+        ? 'Broker emergency open-order custody is not implemented'
         : undefined,
       'Live broker order endpoint is not implemented',
       'Broker write access is disabled',

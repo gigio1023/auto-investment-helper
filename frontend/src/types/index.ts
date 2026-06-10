@@ -943,6 +943,8 @@ export interface BrokerAdapterReadOnlyPollStatus {
   lastFillPollAt?: string;
   lastBrokerFillIds?: Array<number | string>;
   lastFillCount?: number;
+  lastBrokerOrderStatusIds?: Array<number | string>;
+  lastOrderStatusCount?: number;
   lastReconciliationStatus?: string;
   lastReconciledAt?: string;
   lastReconciliationError?: string;

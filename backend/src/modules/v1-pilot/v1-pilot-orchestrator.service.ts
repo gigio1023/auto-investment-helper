@@ -18,6 +18,7 @@ import { MetaAlphaService } from './alpha/meta-alpha.service';
 import { HuggingFaceSemanticEvidenceIngestService } from './alpha/huggingface-semantic-evidence-ingest.service';
 import { LeanLocalSimulatorService } from './lean/lean-local-simulator.service';
 import { LeanRunImportService } from './lean/lean-run-import.service';
+import { ActiveLlmPaperBridgeService } from './paper/active-llm-paper-bridge.service';
 import { LeanPaperBridgeService } from './paper/lean-paper-bridge.service';
 import { LearningLoopService } from './learning/learning-loop.service';
 import { LiveShadowService } from './live/live-shadow.service';
@@ -49,6 +50,7 @@ export class V1PilotOrchestratorService {
     private readonly leanLocalSimulatorService: LeanLocalSimulatorService,
     private readonly leanRunImportService: LeanRunImportService,
     private readonly leanPaperBridgeService: LeanPaperBridgeService,
+    private readonly activeLlmPaperBridgeService: ActiveLlmPaperBridgeService,
     private readonly learningLoopService: LearningLoopService,
     private readonly liveShadowService: LiveShadowService,
     private readonly livePreflightService: LivePreflightService,
@@ -362,6 +364,12 @@ export class V1PilotOrchestratorService {
 
   async runPaperReplay() {
     return this.leanPaperBridgeService.runPaperReplay();
+  }
+
+  async runActiveLlmPaperCycle(
+    options: { runId?: string; maxActions?: number } = {},
+  ) {
+    return this.activeLlmPaperBridgeService.runPaperCycle(options);
   }
 
   async runLiveShadow() {

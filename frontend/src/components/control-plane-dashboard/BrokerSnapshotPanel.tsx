@@ -290,6 +290,14 @@ export const BrokerSnapshotPanel = ({ model }: BrokerSnapshotPanelProps) => {
                   </span>
                 </div>
                 <div>
+                  {t("latest order statuses")}{" "}
+                  <span className="font-mono text-[#eaecef]">
+                    {adapter.readOnlyPoll.lastBrokerOrderStatusIds?.join(
+                      ", ",
+                    ) ?? t("none")}
+                  </span>
+                </div>
+                <div>
                   {t("fill reconcile")}{" "}
                   <span className="font-mono text-[#eaecef]">
                     {t(

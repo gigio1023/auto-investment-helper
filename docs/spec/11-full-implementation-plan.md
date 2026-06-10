@@ -2,7 +2,7 @@
 
 Status: active normative spec.
 
-Last aligned: 2026-05-28.
+Last aligned: 2026-06-01.
 
 ## Purpose
 
@@ -25,12 +25,15 @@ Implemented:
 - Selected-run-bias check that blocks promotion when retained variants are missing.
 - Hugging Face FOMC text evidence ingestion into point-in-time raw evidence.
 - Numeric, LLM, and meta alpha decision storage paths.
+- Active LLM agent decision, evaluation-run, and forecast-label ledgers.
 - LEAN local/simulator runner and QuantConnect Cloud listing/import wrappers.
 - Cloud insight/order pagination and artifact import.
 - Paper replay separated from current paper trading/shadow trading artifacts.
 - Read-only backtest-cycle dashboard and status API.
 - Framework-neutral runtime factory at `backend/src/runtime/create-lincei-runtime.ts`.
 - First-class `lincei` CLI at `backend/src/cli/lincei.ts`.
+- `lincei agent decide`, `lincei agent score`, `lincei agent shadow`, and `lincei agent paper` CLI commands.
+- `lincei broker simulate-paper-plan` CLI command for simulated broker snapshot, order-status, fill-report, and reconciliation rehearsal.
 - Thin Hono HTTP adapter at `backend/src/http/hono-app.ts`.
 - Capital evidence vertical slice that records blocked/passed/flat variant outcomes before promotion review.
 
@@ -41,7 +44,8 @@ Not complete:
 - Broad point-in-time and vintage data stores are incomplete.
 - Ablation jobs are recorded by the capital evidence slice, but backtest and Cloud-import variants still need full retained sweep evidence.
 - QuantConnect Cloud artifacts still depends on operator-provided project/backtest ids and credentials.
-- Current paper trading/shadow trading, reconciliation, and broker-read-only evidence are incomplete.
+- Active LLM agent decisions now create risk-gated shadow records and paper order-plan/reconciliation records, but long-horizon prospective label volume and promotion thresholds are still incomplete.
+- Simulated broker rehearsal proves broker evidence schema and reconciliation plumbing only; current broker-read-only evidence is incomplete until a provider-backed snapshot/fill path is available.
 - Broker-write and Darwinex/Zero adapters are not approved for implementation.
 
 ## Target End State
@@ -52,14 +56,18 @@ The complete system has one validated path:
 strategy research corpus
   -> hypothesis registry
   -> point-in-time and vintage data
-  -> parallel feature, LLM, ablation, and backtest jobs
-  -> QuantConnect Cloud import
-  -> promotion ledger
-  -> LEAN Insight
+  -> numeric/ML baseline backtests
+  -> active LLM agent decision ledger
+  -> prospective paper/shadow evaluation
+  -> forecast scoring
+  -> historical episode replay and Cloud import for backtestable paths
+  -> capital allocation ledger
+  -> risk-gated action plan
   -> portfolio targets
-  -> deterministic risk cuts
+  -> deterministic risk gate
   -> paper trading/shadow trading artifacts
   -> reconciliation
+  -> simulated broker rehearsal
   -> broker-read-only proof
   -> user-approved broker-write spec
   -> self-funded capital allocation
@@ -76,7 +84,7 @@ bun --cwd=backend run lincei -- capital run --max-backtest-workers 1 --json
 
 Compatibility `./scripts/*` wrappers may remain during migration, but new operational commands should be added to `lincei`.
 
-## Workstream A: Research Factory And Variant Ledger
+## Workstream A: Parallel Research Pipeline And Variant Ledger
 
 Goal: make every research and validation attempt durable, replayable, and bias-auditable.
 
@@ -162,7 +170,52 @@ Verification:
 ./scripts/run-selected-run-bias-check
 ```
 
-## Workstream D: LLM Semantic Alpha And Ablations
+## Workstream D: Active LLM Agent Decision Ledger
+
+Goal: evaluate LLM judgment prospectively instead of forcing every active LLM
+variant into exhaustive historical backtests.
+
+Deliver:
+
+- `AgentDecisionRecord` persistence for forecasts, theses, counter-theses,
+  invalidation conditions, risk notes, and action plans.
+- `AgentEvaluationRun` persistence for run mode, prompt version, policy version,
+  input/output hashes, decisions, blockers, and evidence refs.
+- `AgentForecastLabel` persistence with realized return, Brier score, and log
+  score.
+- `lincei agent decide`.
+- `lincei agent score`.
+- `lincei agent shadow`.
+- `lincei agent paper`.
+- deterministic active-agent order-intent mapper.
+- active-agent paper bridge through the existing proposal, approval, paper fill,
+  and reconciliation ledgers.
+- simulated broker rehearsal that turns a reconciled paper order-plan into dry-run broker command, simulated order status, simulated fill report, simulated account snapshot, and broker reconciliation artifacts.
+- blocked records when LLM credentials, market data, or horizons are missing.
+
+Acceptance:
+
+- LLM action plans never contain broker payloads or final order quantities.
+- Missing LLM credentials create blocked evidence instead of simulated LLM
+  success.
+- Forecast scoring is reported separately from trading PnL.
+- Active-agent shadow evidence cannot satisfy LEAN/Cloud promotion evidence.
+- Active-agent paper order-plans are reconciled before being treated as passed.
+- Active agent decisions cannot satisfy broker-write readiness by themselves.
+- Simulated broker rehearsal can prove provider-neutral broker schema and reconciliation contracts, but cannot satisfy real broker-read-only evidence, broker-write readiness, or promotion evidence.
+
+Verification:
+
+```bash
+bun --cwd=backend run lincei -- agent decide --json
+bun --cwd=backend run lincei -- agent shadow --json
+bun --cwd=backend run lincei -- agent paper --json
+bun --cwd=backend run lincei -- broker simulate-paper-plan --json
+bun --cwd=backend run lincei -- agent score --json
+cd backend && bun run test -- src/modules/v1-pilot/agent/active-llm-agent.service.spec.ts src/modules/v1-pilot/paper/active-llm-paper-bridge.service.spec.ts src/modules/v1-pilot/broker/simulated-broker-rehearsal.service.spec.ts
+```
+
+## Workstream E: LLM Semantic Alpha And Ablations
 
 Goal: make LLM output a typed feature source, not a trade allocator.
 
@@ -190,9 +243,11 @@ Verification:
 ./scripts/qc-object-store-sync <key> artifacts/llm-features/latest.json
 ```
 
-## Workstream E: LEAN And QuantConnect Cloud Promotion Evidence
+## Workstream F: LEAN And QuantConnect Cloud Baseline Evidence
 
-Goal: make Cloud-imported artifacts the main promotion evidence when access allows it.
+Goal: keep Cloud-imported artifacts as core evidence for backtestable baselines,
+custom-data replay, and historical episode tests. They are no longer the only
+center of proof for active LLM agents.
 
 Deliver:
 
@@ -218,19 +273,24 @@ Verification:
 ./scripts/import-cloud-backtest --project-id <project-id> --backtest-id <backtest-id>
 ```
 
-## Workstream F: Portfolio, Risk, Paper, Live-Shadow, And Learning
+## Workstream G: Portfolio, Risk, Paper, Shadow, Agent Arena, And Learning
 
 Goal: prove a candidate can move from alpha to current execution evidence without broker writes.
 
 Deliver:
 
 - LEAN Insight to portfolio target import.
-- Deterministic risk cuts with max notional, gross exposure, single-name cap, stale-data block, and kill-switch state.
+- Deterministic risk gates with max notional, gross exposure, single-name cap, stale-data block, and kill-switch state.
 - Paper order plan creation from accepted targets.
 - Paper fills and reconciliation.
 - Current shadow trading records using live data without broker writes.
+- Active LLM agent paper/shadow arena that records risk-gated action plans.
+- Simulated broker adapter rehearsal that emits broker-like snapshots, order statuses, and fill reports from paper state.
 - Outcome labels by horizon.
-- Promotion/rejection ledger that joins hypothesis, data, alpha, backtest, paper trading/shadow trading, reconciliation, and multiple-testing bias evidence.
+- Forecast scoring and calibration reports for active LLM agent variants.
+- Promotion/rejection ledger that joins hypothesis, data, alpha, active agent
+  decisions, forecast labels, backtest, paper trading/shadow trading,
+  reconciliation, and multiple-testing bias evidence.
 
 Acceptance:
 
@@ -238,18 +298,22 @@ Acceptance:
 - Unknown, stale, or mismatched state blocks advancement.
 - Historical paper replay is not treated as broker-write pre-trade risk checks.
 - Promotion requires current paper trading/shadow trading artifacts, not only historical replay.
+- Active LLM agent promotion requires prospective decision and label evidence,
+  not only historical episode replay.
+- Simulated broker adapter evidence is contract/reconciliation proof only; it cannot be reported as real broker-read-only evidence or broker-write approval.
 
 Verification:
 
 ```bash
-./scripts/run-paper-cycle
-./scripts/run-paper-replay
-./scripts/run-live-shadow
-./scripts/run-learning-loop
-./scripts/live-preflight
+bun --cwd=backend run lincei -- paper run --json
+bun --cwd=backend run lincei -- paper replay --json
+bun --cwd=backend run lincei -- shadow run --json
+bun --cwd=backend run lincei -- broker simulate-paper-plan --json
+bun --cwd=backend run lincei -- learning run --json
+bun --cwd=backend run lincei -- preflight run --json
 ```
 
-## Workstream G: Oracle Cloud ARM Continuous Operation
+## Workstream H: Oracle Cloud ARM Continuous Operation
 
 Goal: make the research/evidence loop run continuously with bounded costs and explicit blockers.
 
@@ -276,13 +340,14 @@ cd backend && bun run build
 cd backend && bun run test
 ```
 
-## Workstream H: Broker-Read-Only Reconciliation
+## Workstream I: Broker-Read-Only Reconciliation
 
 Goal: observe real account state before any account mutation exists.
 
 Deliver:
 
 - User-approved broker candidate for read-only work.
+- Provider mapping that can replace the simulated broker adapter's paper-derived snapshot/fill/status inputs with provider-backed broker observations.
 - Account, cash, buying power, position, open-order, fill, fee, and tax-lot read models.
 - Append-only broker snapshot and fill ledgers.
 - Reconciliation against paper trading/shadow trading expected state.
@@ -294,15 +359,17 @@ Acceptance:
 - Unknown broker read state is blocked.
 - Broker credentials never enter LLM prompts, frontend state, logs, or research artifacts.
 - Reconciliation mismatch blocks broker-write pre-trade risk check status.
+- Passing simulated broker rehearsal remains insufficient; provider-backed snapshot/fill reconciliation must match before broker-write pre-trade risk checks can become ready.
 
 Verification:
 
 ```bash
-./scripts/live-preflight
+bun --cwd=backend run lincei -- broker simulate-paper-plan --json
+bun --cwd=backend run lincei -- preflight run --json
 cd backend && bun run test -- src/modules/control-plane
 ```
 
-## Workstream I: Broker-Write Implementation Spec
+## Workstream J: Broker-Write Implementation Spec
 
 Goal: define the exact account-mutation boundary before implementing self-funded capital trading.
 
@@ -313,7 +380,7 @@ Deliver:
 - Maximum notional, gross exposure, single-name exposure, daily loss, drawdown, and turnover limits.
 - Kill switch, cancel, flatten, and rollback drills.
 - Broker schema verification.
-- Preflight failure cases for unknown, stale, mismatched, unsupported, and over-cap state.
+- Pre-trade risk check failure cases for unknown, stale, mismatched, unsupported, and over-cap state.
 - Deployment and incident runbooks.
 
 Acceptance:
@@ -330,7 +397,7 @@ Verification:
 cd backend && bun run test -- <broker-write-spec-tests>
 ```
 
-## Workstream J: Self-Funded Capital Allocation
+## Workstream K: Self-Funded Capital Allocation
 
 Goal: trade the operator's own pre-funded capital only after evidence gates pass.
 
@@ -359,7 +426,7 @@ Verification:
 
 Additional broker-write commands must be named only in the future approved broker-write spec.
 
-## Workstream K: Darwinex/Zero Track-Record Path
+## Workstream L: Darwinex/Zero Track-Record Path
 
 Goal: use self-funded capital deployment-grade signals to pursue later external-capital performance fees.
 
@@ -396,6 +463,8 @@ Parallelize:
 - market/news/filing/macro ingest by source, symbol, and time window;
 - feature generation by feature family, symbol, and window;
 - LLM-derived features by event/symbol/window under cost caps;
+- active LLM agent decisions by independent symbol or historical episode before
+  risk consolidation;
 - numeric/LLM/combined ablations by hypothesis and parameter hash;
 - local backtests by strategy variant where platform resources allow;
 - QuantConnect Cloud imports by endpoint/page range.
@@ -404,7 +473,7 @@ Keep single-writer:
 
 - promotion decision;
 - portfolio target consolidation;
-- risk cuts;
+- deterministic risk gates;
 - paper trading/shadow trading execution intent;
 - reconciliation;
 - broker-read-only account truth per provider/account;
@@ -415,10 +484,11 @@ Keep single-writer:
 
 The full long-term spec is implemented only when:
 
-- P1 baselines and LLM-derived alpha variants are represented as retained variant evidence.
+- P1 baselines, LLM-derived feature variants, and active LLM agent variants are represented as retained variant evidence.
 - Point-in-time and vintage data blockers are enforced.
 - QuantConnect Cloud imports produce accepted or blocked promotion evidence.
-- Current paper trading/shadow trading artifacts and reconciliation exist for promoted candidates.
+- Current paper trading/shadow trading artifacts, active agent forecast labels, and reconciliation exist for promoted candidates.
+- Simulated broker rehearsal passes for current paper order-plans while remaining separate from provider-backed broker evidence.
 - Selected-run-bias review can inspect winning, losing, failed, and blocked variants.
 - Oracle Cloud ARM can run the non-broker loop continuously with cost and stale-data controls.
 - Broker-read-only reconciliation is implemented and matched.
